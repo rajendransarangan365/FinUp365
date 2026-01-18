@@ -242,7 +242,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                     />
                                 </div>
                             </div>
-                            <button type="submit" className="save-btn" disabled={loading} style={{ width: '100%', background: '#ff7675' }}>
+                            <button type="submit" className="save-btn danger" disabled={loading} style={{ width: '100%' }}>
                                 {loading ? 'Updating...' : 'Update Password'}
                             </button>
                         </form>

@@ -101,6 +101,15 @@
     background: #f0f0f0;
 }
 
+.save-btn:active {
+    transform: scale(0.98);
+}
+
+.save-btn.danger {
+    background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+    box-shadow: 0 4px 10px rgba(214, 48, 49, 0.3);
+}
+
 .date-input {
     width: 100%;
     padding: 10px;
