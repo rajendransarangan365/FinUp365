@@ -3,6 +3,7 @@ import api from '../services/api';
 import '../styles/Login.css';
 import { useNavigate } from 'react-router-dom';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import logo from '../assets/logo.png';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -37,7 +38,7 @@ const Login = () => {
         <div className="login-screen">
             <div className="login-content">
                 <div className="logo-area">
-                    <h1>Fin FollowUp</h1>
+                    <img src={logo} alt="Fin FollowUp" style={{ maxWidth: '280px', height: 'auto', marginBottom: '1rem' }} />
                     <p>Track your leads, close more deals.</p>
                 </div>
 

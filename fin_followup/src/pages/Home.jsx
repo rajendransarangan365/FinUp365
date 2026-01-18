@@ -3,6 +3,7 @@ import CustomerCard from '../components/CustomerCard';
 import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
+import logo from '../assets/logo.png';
 
 import api from '../services/api';
 import StatusUpdateDialog from '../components/StatusUpdateDialog';
@@ -147,7 +148,7 @@ const Home = () => {
             {/* Soft UI Header */}
             <header className="crm-header">
                 <div>
-                    <h1 className="brand-title">Fin FollowUp</h1>
+                    <img src={logo} alt="Fin FollowUp" className="brand-logo" style={{ maxHeight: '50px', height: 'auto' }} />
                     <p className="crm-subtitle">Good evening</p>
                 </div>
                 <div className="header-actions">
