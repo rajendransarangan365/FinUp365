@@ -11,6 +11,12 @@ const CustomerSchema = new mongoose.Schema({
     photoUrl: { type: String },             // Business Card / Shop Photo
     profilePicUrl: { type: String },        // Customer Avatar
     audioUrl: { type: String },
+    history: [{
+        date: { type: Date, default: Date.now },
+        action: String, // e.g. 'Call', 'Meeting', 'Note', 'Status Change'
+        note: String,
+        nextFollowUp: String
+    }],
     createdAt: { type: Date, default: Date.now }
 });
 

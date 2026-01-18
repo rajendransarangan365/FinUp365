@@ -87,7 +87,8 @@ const Home = () => {
 
             await api.patch(`/customers/${customerId}/status`, {
                 status: newStatus,
-                followUpDate: updateData.nextDate
+                followUpDate: updateData.nextDate,
+                note: updateData.note
             });
 
             // Optimistic Update

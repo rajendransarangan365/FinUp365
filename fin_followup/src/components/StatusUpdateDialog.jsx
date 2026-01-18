@@ -80,6 +80,25 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                     <button className="btn-text" onClick={onClose}>Cancel</button>
                     <button className="btn-primary" onClick={handleSave}>Save Update</button>
                 </div>
+
+                {/* History Section */}
+                {customer.history && customer.history.length > 0 && (
+                    <div className="history-section">
+                        <h4>📜 History</h4>
+                        <div className="history-list">
+                            {customer.history.slice().reverse().map((item, index) => (
+                                <div key={index} className="history-item">
+                                    <div className="history-header">
+                                        <span className="history-date">{new Date(item.date).toLocaleDateString()}</span>
+                                        <span className="history-action">{item.action}</span>
+                                    </div>
+                                    {item.note && <p className="history-note">"{item.note}"</p>}
+                                    {item.nextFollowUp && <span className="history-next">Next: {item.nextFollowUp}</span>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

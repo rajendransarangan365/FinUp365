@@ -107,10 +107,22 @@ router.get('/:userId', async (req, res) => {
 // 3. Update Status
 router.patch('/:id/status', async (req, res) => {
     try {
-        const { status, followUpDate } = req.body;
+        const { status, followUpDate, note } = req.body;
+
+        const historyEntry = {
+            date: new Date(),
+            action: status === 'RESCHEDULE' ? 'Follow Up Scheduled' : (status === 'CONVERTED' ? 'Deal Closed' : 'Marked Not Interested'),
+            note: note || '',
+            nextFollowUp: followUpDate
+        };
+
         const customer = await Customer.findByIdAndUpdate(
             req.params.id,
-            { status, followUpDate },
+            {
+                status,
+                followUpDate,
+                $push: { history: historyEntry }
+            },
             { new: true }
         );
         res.json(customer);
