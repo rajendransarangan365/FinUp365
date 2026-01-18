@@ -1,0 +1,193 @@
+/* Premium CRM Theme */
+:root {
+    --bg-color: #f4f7fe;
+    --surface-color: #ffffff;
+    --primary-color: #4318ff;
+    --text-primary: #1b2559;
+    --text-secondary: #a3aed0;
+}
+
+.crm-dashboard {
+    background-color: var(--bg-color);
+    min-height: 100vh;
+    padding-bottom: 90px;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* Header */
+.crm-header {
+    padding: 24px 24px 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.brand-title {
+    font-size: 1.5rem;
+    /* 24px */
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.crm-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.crm-icon-btn {
+    background: var(--surface-color);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--text-primary);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+    /* Soft shadow */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-btn {
+    background: linear-gradient(135deg, #868CFF 0%, #4318FF 100%);
+    color: white;
+    font-weight: bold;
+}
+
+/* Stats Row */
+.stats-row {
+    display: flex;
+    gap: 16px;
+    padding: 0 24px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    /* For scrollbar */
+}
+
+.stat-card {
+    background: var(--surface-color);
+    border-radius: 16px;
+    padding: 16px;
+    min-width: 100px;
+    flex: 1;
+    box-shadow: 0px 18px 40px rgba(112, 144, 176, 0.12);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s;
+}
+
+.stat-card.active {
+    background: var(--primary-color);
+}
+
+.stat-card.active .stat-label,
+.stat-card.active .stat-value {
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Sections */
+.crm-section {
+    padding: 0 24px;
+    margin-bottom: 32px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.count-badge {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.crm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.text-muted {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Empty State */
+.empty-state-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+/* Floating Action Button */
+.crm-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: 0px 20px 50px rgba(67, 24, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    transition: transform 0.2s;
+}
+
+.crm-fab:active {
+    transform: scale(0.95);
+}
+
+/* New Lead Styling */
+.new-badge {
+    background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%);
+    color: white;
+}
+
+.crm-card.new-border {
+    border-left: 4px solid #8e44ad;
+    background: linear-gradient(to right, #fdfbfd, #ffffff);
+}

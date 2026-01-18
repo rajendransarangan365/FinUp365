@@ -1,0 +1,121 @@
+/* CRM Card Base */
+.crm-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.crm-card:active {
+    transform: scale(0.98);
+}
+
+.crm-card.urgent-border {
+    border-left: 4px solid #ff4757;
+}
+
+.crm-card.completed-dim {
+    opacity: 0.7;
+    filter: grayscale(0.5);
+    background: #fcfcfc;
+}
+
+.crm-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Avatar */
+.crm-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.crm-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Info */
+.crm-info {
+    flex: 1;
+}
+
+.crm-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2b3674;
+    /* Dark blue-ish */
+}
+
+.crm-detail {
+    margin: 2px 0 8px;
+    font-size: 0.85rem;
+    color: #a3aed0;
+}
+
+.crm-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.crm-tag {
+    background: #f4f7fe;
+    color: #a3aed0;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.crm-date-tag {
+    background: #fff0f0;
+    color: #ff4757;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Status Icon */
+.crm-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-emoji {
+    font-size: 1.2rem;
+}
+
+.indicator-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #ff4757;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ff4757;
+}
