@@ -13,3 +13,34 @@ body {
   width: 100%;
   min-height: 100vh;
 }
+
+/* Global Premium Button Style */
+.btn-primary {
+  background: linear-gradient(135deg, #4318FF 0%, #868CFF 100%);
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 50px;
+  /* Pill shape as requested */
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(67, 24, 255, 0.2);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* letter-spacing: 0.5px; Premium touch */
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 5px 10px rgba(67, 24, 255, 0.2);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  box-shadow: none;
+  cursor: not-allowed;
+}
