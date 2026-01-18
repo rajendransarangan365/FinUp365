@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -69,6 +70,31 @@ router.post('/login', async (req, res) => {
             token,
             user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName }
         });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// 3. Change Password
+router.post('/change-password', authMiddleware, async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const { userId } = req.user;
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Verify Old Password
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) return res.status(400).json({ error: "Incorrect old password" });
+
+        // Hash New Password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ message: "Password updated successfully" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Server error" });

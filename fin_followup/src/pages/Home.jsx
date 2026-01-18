@@ -6,21 +6,30 @@ import '../styles/Home.css';
 
 import api from '../services/api';
 import StatusUpdateDialog from '../components/StatusUpdateDialog';
+import ProfileDialog from '../components/ProfileDialog';
 
 const Home = () => {
     const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
+    const [showProfile, setShowProfile] = useState(false); // For Profile Dialog
 
     const handleLogout = () => {
+        // ... logout logic ...
         // Direct logout for better UX/Mobile compatibility
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login'; // Hard reload to clear state cleanly
     };
 
+    const getUserInitial = () => {
+        const u = JSON.parse(localStorage.getItem('user'));
+        return u?.name?.charAt(0) || 'R';
+    }
+
     React.useEffect(() => {
+        // ... existing effect ...
         const fetchCustomers = async () => {
             const storedUser = JSON.parse(localStorage.getItem('user'));
             if (!storedUser || !storedUser._id) return;
@@ -44,11 +53,12 @@ const Home = () => {
     }, []);
 
     const handleCall = (customer) => {
-        // In this photo UI, tapping opens the dialog immediately for actions + call
+        // ... existing ...
         setSelectedCustomer(customer);
     };
 
     const handleUpdateStatus = async (customerId, updateData) => {
+        // ... existing ...
         try {
             // Determine status based on updateData.status (which now comes directly from dialog)
             // If it's RESCHEDULE, we treat it as 'NORMAL' active status for now, or keep user's 'RESCHEDULE' intent?
@@ -77,6 +87,7 @@ const Home = () => {
         }
     };
 
+    // ... filters ...
     // --- Smart Filtering Logic ---
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -112,7 +123,9 @@ const Home = () => {
                     <button className="crm-icon-btn" onClick={handleLogout} title="Log Out">
                         <FaSignOutAlt color="#e74c3c" />
                     </button>
-                    <button className="crm-icon-btn profile-btn">R</button>
+                    <button className="crm-icon-btn profile-btn" onClick={() => setShowProfile(true)}>
+                        {getUserInitial()}
+                    </button>
                 </div>
             </header>
 
@@ -207,6 +220,13 @@ const Home = () => {
                     customer={selectedCustomer}
                     onClose={() => setSelectedCustomer(null)}
                     onUpdate={handleUpdateStatus}
+                />
+            )}
+
+            {showProfile && (
+                <ProfileDialog
+                    user={JSON.parse(localStorage.getItem('user')) || { name: 'User', email: '', agencyName: '' }}
+                    onClose={() => setShowProfile(false)}
                 />
             )}
         </div>
