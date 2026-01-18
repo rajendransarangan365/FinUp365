@@ -1,17 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
+import { FaMicrophone } from 'react-icons/fa';
 
 const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
     const [outcome, setOutcome] = useState('RESCHEDULE'); // RESCHEDULE | CONVERTED | NOT_INTERESTED
     const [date, setDate] = useState('');
     const [note, setNote] = useState('');
 
+    // Audio Recorder State
+    const [recording, setRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const mediaRecorderRef = useRef(null);
+    const chunksRef = useRef([]);
+
+    const toggleRecording = async () => {
+        if (recording) {
+            mediaRecorderRef.current.stop();
+            setRecording(false);
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorderRef.current = new MediaRecorder(stream);
+                chunksRef.current = [];
+                mediaRecorderRef.current.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunksRef.current.push(e.data);
+                };
+                mediaRecorderRef.current.onstop = () => {
+                    const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                    setAudioBlob(blob);
+                };
+                mediaRecorderRef.current.start();
+                setRecording(true);
+            } catch (err) {
+                console.error("Error accessing microphone:", err);
+                alert("Could not access microphone.");
+            }
+        }
+    };
+
     const handleSave = () => {
         onUpdate(customer.id, {
             status: outcome, // Pass 'RESCHEDULE', 'CONVERTED', or 'NOT_INTERESTED'
             outcome,
             nextDate: date,
-            note
+            note,
+            audioBlob // Pass the recorded audio blob
         });
         onClose();
     };
@@ -69,6 +102,30 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                     </div>
                 )}
 
+                {/* Voice Note Section */}
+                <div style={{ marginBottom: '12px' }}>
+                    <button
+                        type="button"
+                        onClick={toggleRecording}
+                        className={recording ? 'voice-btn recording' : 'voice-btn'}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '12px',
+                            border: '1px solid #eee',
+                            background: recording ? '#fee2e2' : '#f8f9fa',
+                            color: recording ? '#e74c3c' : '#555',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                            cursor: 'pointer', fontWeight: '500',
+                            animation: recording ? 'pulse 1.5s infinite' : 'none'
+                        }}
+                    >
+                        <FaMicrophone />
+                        {recording ? 'Stop Recording' : (audioBlob ? 'Re-record Voice Note' : 'Add Voice Note')}
+                    </button>
+                    {audioBlob && <div style={{ fontSize: '12px', color: '#27ae60', marginTop: '4px', textAlign: 'center' }}>✓ Voice Note Recorded</div>}
+                </div>
+
                 <textarea
                     placeholder="Add a quick note..."
                     value={note}
@@ -93,6 +150,11 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                                         <span className="history-action">{item.action}</span>
                                     </div>
                                     {item.note && <p className="history-note">"{item.note}"</p>}
+                                    {item.audioUrl && (
+                                        <div style={{ marginTop: '8px' }}>
+                                            <audio controls src={item.audioUrl} style={{ width: '100%', height: '32px' }} />
+                                        </div>
+                                    )}
                                     {item.nextFollowUp && <span className="history-next">Next: {item.nextFollowUp}</span>}
                                 </div>
                             ))}
@@ -100,6 +162,13 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                     </div>
                 )}
             </div>
+            <style>{`
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.02); }
+                    100% { transform: scale(1); }
+                }
+            `}</style>
         </div>
     );
 };

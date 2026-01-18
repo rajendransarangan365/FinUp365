@@ -73,39 +73,42 @@ const Home = () => {
     };
 
     const handleUpdateStatus = async (customerId, updateData) => {
-        // ... existing ...
         try {
-            // Determine status based on updateData.status (which now comes directly from dialog)
-            // If it's RESCHEDULE, we treat it as 'NORMAL' active status for now, or keep user's 'RESCHEDULE' intent?
-            // The Dialog passes: 'RESCHEDULE', 'CONVERTED', 'NOT_INTERESTED'
-
+            // Determine status logic
             let newStatus = updateData.status;
-            // Map RESCHEDULE to 'NORMAL' or keep as is? 
-            // Original logic used 'DONE' or 'NORMAL'. 
-            // Let's assume 'CONVERTED' and 'NOT_INTERESTED' are effectively 'DONE' types, but we save the string.
             if (newStatus === 'RESCHEDULE') newStatus = 'NORMAL';
 
-            await api.patch(`/customers/${customerId}/status`, {
-                status: newStatus,
-                followUpDate: updateData.nextDate,
-                note: updateData.note
-            });
+            let responseData; // To store backend response
 
-            // Optimistic Update
+            if (updateData.audioBlob) {
+                // Use FormData for File Upload
+                const formData = new FormData();
+                formData.append('status', newStatus);
+                formData.append('followUpDate', updateData.nextDate);
+                formData.append('note', updateData.note);
+                formData.append('audio', updateData.audioBlob, 'status_update.webm');
+
+                const { data } = await api.patch(`/customers/${customerId}/status`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                responseData = data;
+            } else {
+                // Regular JSON Update
+                const { data } = await api.patch(`/customers/${customerId}/status`, {
+                    status: newStatus,
+                    followUpDate: updateData.nextDate,
+                    note: updateData.note
+                });
+                responseData = data;
+            }
+
+            // Optimistic Update (or use responseData)
             setCustomers(prev => prev.map(c => {
                 if (c.id === customerId) {
-                    const newHistoryItem = {
-                        date: new Date().toISOString(),
-                        action: newStatus === 'NORMAL' ? 'Follow Up Scheduled' : (newStatus === 'CONVERTED' ? 'Deal Closed' : 'Marked Not Interested'),
-                        note: updateData.note || '',
-                        nextFollowUp: updateData.nextDate
-                    };
-                    return {
-                        ...c,
-                        status: newStatus,
-                        followUpDate: updateData.nextDate,
-                        history: [...(c.history || []), newHistoryItem]
-                    };
+                    // We can use responseData to get the exact history item, including the cloud URL
+                    // But for immediate feedback, we can just use the backend response directly which usually returns the updated customer
+                    // Or we can construct it manually. Let's use the backend response.
+                    return { ...c, ...responseData, id: c.id };
                 }
                 return c;
             }));

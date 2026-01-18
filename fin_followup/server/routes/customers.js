@@ -105,15 +105,27 @@ router.get('/:userId', async (req, res) => {
 });
 
 // 3. Update Status
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', upload.single('audio'), async (req, res) => {
     try {
         const { status, followUpDate, note } = req.body;
+        let audioUrl = null;
+
+        // Upload Audio if present
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                resource_type: "video",
+                folder: "fin_followup_history_audio"
+            });
+            audioUrl = result.secure_url;
+            fs.unlinkSync(req.file.path);
+        }
 
         const historyEntry = {
             date: new Date(),
             action: status === 'RESCHEDULE' ? 'Follow Up Scheduled' : (status === 'CONVERTED' ? 'Deal Closed' : 'Marked Not Interested'),
             note: note || '',
-            nextFollowUp: followUpDate
+            nextFollowUp: followUpDate,
+            audioUrl // Add audio URL to history
         };
 
         const customer = await Customer.findByIdAndUpdate(
@@ -127,6 +139,8 @@ router.patch('/:id/status', async (req, res) => {
         );
         res.json(customer);
     } catch (err) {
+        console.error(err);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ error: "Update failed" });
     }
 });

@@ -15,7 +15,8 @@ const CustomerSchema = new mongoose.Schema({
         date: { type: Date, default: Date.now },
         action: String, // e.g. 'Call', 'Meeting', 'Note', 'Status Change'
         note: String,
-        nextFollowUp: String
+        nextFollowUp: String,
+        audioUrl: String
     }],
     createdAt: { type: Date, default: Date.now }
 });
