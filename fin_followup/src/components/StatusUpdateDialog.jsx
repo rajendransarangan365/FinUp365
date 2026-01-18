@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
 import { FaMicrophone } from 'react-icons/fa';
+import { FiX } from 'react-icons/fi';
 
 const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
     const [outcome, setOutcome] = useState('RESCHEDULE'); // RESCHEDULE | CONVERTED | NOT_INTERESTED
@@ -51,7 +52,19 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
 
     return (
         <div className="dialog-overlay">
-            <div className="dialog-card">
+            <div className="dialog-card" style={{ position: 'relative' }}>
+                <button
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute', top: 16, right: 16,
+                        background: '#f1f2f6', border: 'none',
+                        borderRadius: '50%', width: 32, height: 32,
+                        color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                        zIndex: 10
+                    }}
+                >
+                    <FiX size={18} />
+                </button>
                 <h3>Update Status: {customer.name}</h3>
                 <p>What happened?</p>
 
