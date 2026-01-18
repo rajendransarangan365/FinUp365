@@ -2,9 +2,22 @@ import express from 'express';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
 import authMiddleware from '../middleware/auth.js';
+import path from 'path';
 
 const router = express.Router();
+
+// Cloudinary Config
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const upload = multer({ dest: 'uploads/' });
 
 // 1. Register User
 router.post('/register', async (req, res) => {
@@ -12,15 +25,12 @@ router.post('/register', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: "Email and Password required" });
 
     try {
-        // Check if user exists
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ error: "User already exists" });
 
-        // Hash Password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create User
         user = new User({
             email,
             password: hashedPassword,
@@ -29,7 +39,6 @@ router.post('/register', async (req, res) => {
         });
         await user.save();
 
-        // Generate Token
         const token = jwt.sign(
             { userId: user._id, email: user.email },
             process.env.JWT_SECRET,
@@ -38,7 +47,7 @@ router.post('/register', async (req, res) => {
 
         res.json({
             token,
-            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName }
+            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl }
         });
     } catch (err) {
         console.error(err);
@@ -55,20 +64,18 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ error: "Invalid credentials" });
 
-        // Verify Password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-        // Generate Token
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            'SECRET_KEY_REPLACE_LATER',
+            process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );
 
         res.json({
             token,
-            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName }
+            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl }
         });
     } catch (err) {
         console.error(err);
@@ -85,11 +92,9 @@ router.post('/change-password', authMiddleware, async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ error: "User not found" });
 
-        // Verify Old Password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) return res.status(400).json({ error: "Incorrect old password" });
 
-        // Hash New Password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
         await user.save();
@@ -97,6 +102,40 @@ router.post('/change-password', authMiddleware, async (req, res) => {
         res.json({ message: "Password updated successfully" });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// 4. Update Profile
+router.post('/update-profile', authMiddleware, upload.single('photo'), async (req, res) => {
+    const { name, agencyName } = req.body;
+    const { userId } = req.user;
+
+    try {
+        let user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (name) user.name = name;
+        if (agencyName) user.agencyName = agencyName;
+
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: "finup365/profiles",
+                transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }]
+            });
+            user.photoUrl = result.secure_url;
+            fs.unlinkSync(req.file.path);
+        }
+
+        await user.save();
+
+        res.json({
+            message: "Profile updated successfully",
+            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl }
+        });
+    } catch (err) {
+        console.error(err);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ error: "Server error" });
     }
 });

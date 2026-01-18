@@ -23,9 +23,21 @@ const Home = () => {
         window.location.href = '/login'; // Hard reload to clear state cleanly
     };
 
+    const handleUpdateUser = (updatedUser) => {
+        // Trigger a re-render if needed, though state update in ProfileDialog might be enough if we re-read from localStorage
+        // Or we can keep a user state in Home. For now, force update via key or setCustomers hack? 
+        // Better: let's treat user as a state but for now just force update the button.
+        window.dispatchEvent(new Event('storage')); // trigger updates if we listened to it, but we can just use a state.
+    };
+
     const getUserInitial = () => {
         const u = JSON.parse(localStorage.getItem('user'));
         return u?.name?.charAt(0) || 'R';
+    }
+
+    const getUserPhoto = () => {
+        const u = JSON.parse(localStorage.getItem('user'));
+        return u?.photoUrl;
     }
 
     React.useEffect(() => {
@@ -123,8 +135,16 @@ const Home = () => {
                     <button className="crm-icon-btn" onClick={handleLogout} title="Log Out">
                         <FaSignOutAlt color="#e74c3c" />
                     </button>
-                    <button className="crm-icon-btn profile-btn" onClick={() => setShowProfile(true)}>
-                        {getUserInitial()}
+                    <button
+                        className="crm-icon-btn profile-btn"
+                        onClick={() => setShowProfile(true)}
+                        style={{ padding: 0, overflow: 'hidden' }}
+                    >
+                        {getUserPhoto() ? (
+                            <img src={getUserPhoto()} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            getUserInitial()
+                        )}
                     </button>
                 </div>
             </header>
@@ -227,6 +247,7 @@ const Home = () => {
                 <ProfileDialog
                     user={JSON.parse(localStorage.getItem('user')) || { name: 'User', email: '', agencyName: '' }}
                     onClose={() => setShowProfile(false)}
+                    onUpdateUser={handleUpdateUser}
                 />
             )}
         </div>

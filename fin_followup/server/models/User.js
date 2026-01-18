@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     name: { type: String },
     agencyName: { type: String },
+    photoUrl: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 
