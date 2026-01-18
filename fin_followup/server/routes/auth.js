@@ -21,7 +21,10 @@ const upload = multer({ dest: 'uploads/' });
 
 // 1. Register User
 router.post('/register', async (req, res) => {
-    const { email, password, name, agencyName } = req.body;
+    let { email, password, name, agencyName } = req.body;
+    if (email) email = email.trim();
+    if (password) password = password.trim();
+
     if (!email || !password) return res.status(400).json({ error: "Email and Password required" });
 
     try {
@@ -57,7 +60,10 @@ router.post('/register', async (req, res) => {
 
 // 2. Login User
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    if (email) email = email.trim();
+    if (password) password = password.trim();
+
     if (!email || !password) return res.status(400).json({ error: "Email and Password required" });
 
     try {
@@ -85,7 +91,8 @@ router.post('/login', async (req, res) => {
 
 // 3. Verify Password
 router.post('/verify-password', authMiddleware, async (req, res) => {
-    const { password } = req.body; // Expecting 'password' field
+    let { password } = req.body; // Expecting 'password' field
+    if (password) password = password.trim();
     const { userId } = req.user;
 
     try {
@@ -106,7 +113,9 @@ router.post('/verify-password', authMiddleware, async (req, res) => {
 router.post('/change-password', authMiddleware, async (req, res) => {
     // Note: We duplicate verification here for double security, 
     // but the frontend flow will rely on the previous step for UX.
-    const { oldPassword, newPassword } = req.body;
+    let { oldPassword, newPassword } = req.body;
+    if (oldPassword) oldPassword = oldPassword.trim();
+    if (newPassword) newPassword = newPassword.trim();
     const { userId } = req.user;
 
     try {

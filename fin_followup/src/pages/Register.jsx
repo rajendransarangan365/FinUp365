@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
-import { FiUser, FiBriefcase, FiMail, FiLock } from 'react-icons/fi';
+import { FiUser, FiBriefcase, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Register = () => {
     const [name, setName] = useState('');
     const [agencyName, setAgencyName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -88,15 +89,30 @@ const Register = () => {
 
                         {/* Password Field */}
                         <label>Password</label>
-                        <div className="input-group">
+                        <div className="input-group" style={{ position: 'relative' }}>
                             <FiLock color="var(--color-secondary)" size={20} style={{ marginRight: 12 }} />
                             <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Create a strong password"
                                 required
                             />
+                            <div
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    cursor: 'pointer',
+                                    color: '#aaa',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                            </div>
                         </div>
 
                         <button

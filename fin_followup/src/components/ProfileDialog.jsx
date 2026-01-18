@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
-import { FiX, FiCheck, FiCamera, FiLock, FiUser, FiBriefcase } from 'react-icons/fi';
+import { FiX, FiCheck, FiCamera, FiLock, FiUser, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
 import api from '../services/api';
 
 const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
@@ -13,6 +13,9 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showOldPass, setShowOldPass] = useState(false);
+    const [showNewPass, setShowNewPass] = useState(false);
+    const [showConfirmPass, setShowConfirmPass] = useState(false);
     const [isVerified, setIsVerified] = useState(false);
     const [snackbar, setSnackbar] = useState({ show: false, message: '', type: '' });
 
@@ -241,15 +244,21 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                 <form onSubmit={handleVerifyPassword}>
                                     <div className="form-group" style={{ marginBottom: '16px' }}>
                                         <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Current Password</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px', position: 'relative' }}>
                                             <FiLock color="#aaa" />
                                             <input
-                                                type="password"
+                                                type={showOldPass ? 'text' : 'password'}
                                                 value={oldPassword}
                                                 onChange={e => setOldPassword(e.target.value)}
                                                 placeholder="Enter current password"
                                                 style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
                                             />
+                                            <div
+                                                onClick={() => setShowOldPass(!showOldPass)}
+                                                style={{ cursor: 'pointer', color: '#aaa', marginLeft: '8px' }}
+                                            >
+                                                {showOldPass ? <FiEyeOff /> : <FiEye />}
+                                            </div>
                                         </div>
                                     </div>
                                     <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
@@ -260,28 +269,40 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                 <form onSubmit={handleChangePassword}>
                                     <div className="form-group" style={{ marginBottom: '16px' }}>
                                         <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>New Password</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px', position: 'relative' }}>
                                             <FiLock color="#aaa" />
                                             <input
-                                                type="password"
+                                                type={showNewPass ? 'text' : 'password'}
                                                 value={newPassword}
                                                 onChange={e => setNewPassword(e.target.value)}
                                                 placeholder="Create new password"
                                                 style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
                                             />
+                                            <div
+                                                onClick={() => setShowNewPass(!showNewPass)}
+                                                style={{ cursor: 'pointer', color: '#aaa', marginLeft: '8px' }}
+                                            >
+                                                {showNewPass ? <FiEyeOff /> : <FiEye />}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="form-group" style={{ marginBottom: '24px' }}>
                                         <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Confirm New Password</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px', position: 'relative' }}>
                                             <FiCheck color="#aaa" />
                                             <input
-                                                type="password"
+                                                type={showConfirmPass ? 'text' : 'password'}
                                                 value={confirmPassword}
                                                 onChange={e => setConfirmPassword(e.target.value)}
                                                 placeholder="Confirm match"
                                                 style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
                                             />
+                                            <div
+                                                onClick={() => setShowConfirmPass(!showConfirmPass)}
+                                                style={{ cursor: 'pointer', color: '#aaa', marginLeft: '8px' }}
+                                            >
+                                                {showConfirmPass ? <FiEyeOff /> : <FiEye />}
+                                            </div>
                                         </div>
                                     </div>
                                     <button type="submit" className="btn-danger" disabled={loading} style={{ width: '100%' }}>

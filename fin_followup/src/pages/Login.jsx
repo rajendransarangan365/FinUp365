@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import '../styles/Login.css';
 import { useNavigate } from 'react-router-dom';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -51,14 +53,29 @@ const Login = () => {
                     </div>
 
                     <label style={{ marginTop: 16 }}>Password</label>
-                    <div className="input-group">
+                    <div className="input-group" style={{ position: 'relative' }}>
                         <input
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="********"
                             className="full-width-input"
                         />
+                        <div
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                cursor: 'pointer',
+                                color: '#aaa',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                        </div>
                     </div>
 
                     <button
