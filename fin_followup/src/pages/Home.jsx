@@ -14,11 +14,10 @@ const Home = () => {
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
 
     const handleLogout = () => {
-        if (window.confirm("Are you sure you want to log out?")) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/login');
-        }
+        // Direct logout for better UX/Mobile compatibility
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login'; // Hard reload to clear state cleanly
     };
 
     React.useEffect(() => {

@@ -54,6 +54,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    /* Ensure clickable */
+    z-index: 10;
+    /* Ensure on top */
 }
 
 .profile-btn {
