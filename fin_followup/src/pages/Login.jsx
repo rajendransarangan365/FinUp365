@@ -25,7 +25,9 @@ const Login = () => {
 
         } catch (error) {
             console.error(error);
-            alert(error.response?.data?.error || "Login Failed");
+            let msg = error.response?.data?.error || "Login Failed";
+            if (typeof msg === 'object') msg = JSON.stringify(msg);
+            alert(msg);
         } finally {
             setLoading(false);
         }

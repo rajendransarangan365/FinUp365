@@ -32,7 +32,9 @@ const Register = () => {
             window.location.href = "/";
         } catch (error) {
             console.error("Registration error:", error);
-            alert("Registration Failed: " + (error.response?.data?.error || error.message));
+            let msg = error.response?.data?.error || error.message || "Registration Failed";
+            if (typeof msg === 'object') msg = JSON.stringify(msg);
+            alert(msg);
         } finally {
             setLoading(false);
         }
