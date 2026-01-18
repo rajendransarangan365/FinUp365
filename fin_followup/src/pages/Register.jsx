@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
+import { FiUser, FiBriefcase, FiMail, FiLock } from 'react-icons/fi';
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -46,51 +47,55 @@ const Register = () => {
 
                 <div className="card login-card">
                     <form onSubmit={handleRegister}>
-                        <div className="form-group">
-                            <label>Name</label>
+                        {/* Name Field */}
+                        <label>Full Name</label>
+                        <div className="input-group">
+                            <FiUser color="var(--color-secondary)" size={20} style={{ marginRight: 12 }} />
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. Raja"
+                                placeholder="e.g. Raja Sarangan"
                                 required
-                                className="profile-input"
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label>Agency</label>
+                        {/* Agency Field */}
+                        <label>Agency / Business Name</label>
+                        <div className="input-group">
+                            <FiBriefcase color="var(--color-secondary)" size={20} style={{ marginRight: 12 }} />
                             <input
                                 type="text"
                                 value={agencyName}
                                 onChange={(e) => setAgencyName(e.target.value)}
                                 placeholder="e.g. FinUp Services"
                                 required
-                                className="profile-input"
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label>Email</label>
+                        {/* Email Field */}
+                        <label>Email Address</label>
+                        <div className="input-group">
+                            <FiMail color="var(--color-secondary)" size={20} style={{ marginRight: 12 }} />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="agent@example.com"
                                 required
-                                className="profile-input"
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label>Password</label>
+                        {/* Password Field */}
+                        <label>Password</label>
+                        <div className="input-group">
+                            <FiLock color="var(--color-secondary)" size={20} style={{ marginRight: 12 }} />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="********"
+                                placeholder="Create a strong password"
                                 required
-                                className="profile-input"
                             />
                         </div>
 
@@ -105,10 +110,10 @@ const Register = () => {
 
                     <button
                         className="btn-text"
-                        style={{ marginTop: 16 }}
+                        style={{ marginTop: 24, width: '100%', textAlign: 'center' }}
                         onClick={() => navigate('/login')}
                     >
-                        Already have an account? Log In
+                        Already have an account? <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Log In</span>
                     </button>
                 </div>
             </div>
