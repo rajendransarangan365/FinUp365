@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSignOutAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 
@@ -12,6 +12,14 @@ const Home = () => {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
+
+    const handleLogout = () => {
+        if (window.confirm("Are you sure you want to log out?")) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/login');
+        }
+    };
 
     React.useEffect(() => {
         const fetchCustomers = async () => {
@@ -99,10 +107,12 @@ const Home = () => {
             <header className="crm-header">
                 <div>
                     <h1 className="brand-title">Fin FollowUp</h1>
-                    <p className="crm-subtitle">Good evening, Raja</p>
+                    <p className="crm-subtitle">Good evening</p>
                 </div>
                 <div className="header-actions">
-                    <button className="crm-icon-btn"><FaSearch /></button>
+                    <button className="crm-icon-btn" onClick={handleLogout} title="Log Out">
+                        <FaSignOutAlt color="#e74c3c" />
+                    </button>
                     <button className="crm-icon-btn profile-btn">R</button>
                 </div>
             </header>
