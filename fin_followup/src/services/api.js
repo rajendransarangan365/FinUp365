@@ -17,7 +17,8 @@ api.interceptors.request.use(
             config.headers['Authorization'] = `Bearer ${token}`; // We'll add server verification later
         }
         return config;
-        (error) => Promise.reject(error)
+    },
+    (error) => Promise.reject(error)
 );
 
 // Add a response interceptor to handle Token Expiry/Invalidation

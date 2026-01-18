@@ -83,8 +83,29 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// 3. Change Password
+// 3. Verify Password
+router.post('/verify-password', authMiddleware, async (req, res) => {
+    const { password } = req.body; // Expecting 'password' field
+    const { userId } = req.user;
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ error: "Incorrect password" });
+
+        res.json({ message: "Password verified" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// 4. Change Password
 router.post('/change-password', authMiddleware, async (req, res) => {
+    // Note: We duplicate verification here for double security, 
+    // but the frontend flow will rely on the previous step for UX.
     const { oldPassword, newPassword } = req.body;
     const { userId } = req.user;
 

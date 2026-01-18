@@ -13,6 +13,29 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [isVerified, setIsVerified] = useState(false);
+    const [snackbar, setSnackbar] = useState({ show: false, message: '', type: '' });
+
+    const showSnackbar = (message, type = 'error') => {
+        setSnackbar({ show: true, message, type });
+        setTimeout(() => setSnackbar({ show: false, message: '', type: '' }), 3000);
+    };
+
+    const handleVerifyPassword = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.post('/auth/verify-password', { password: oldPassword }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setIsVerified(true);
+            showSnackbar("Identity Verified", 'success');
+        } catch (error) {
+            showSnackbar("Incorrect Password", 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('details'); // 'details' or 'security'
@@ -213,50 +236,74 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                     )}
 
                     {activeTab === 'security' && (
-                        <form onSubmit={handleChangePassword}>
-                            <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Current Password</label>
-                                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
-                                    <FiLock color="#aaa" />
-                                    <input
-                                        type="password"
-                                        value={oldPassword}
-                                        onChange={e => setOldPassword(e.target.value)}
-                                        placeholder="Verify it's you"
-                                        style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
-                                    />
+                        <div style={{ position: 'relative' }}>
+                            {!isVerified ? (
+                                <form onSubmit={handleVerifyPassword}>
+                                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                                        <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Current Password</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                            <FiLock color="#aaa" />
+                                            <input
+                                                type="password"
+                                                value={oldPassword}
+                                                onChange={e => setOldPassword(e.target.value)}
+                                                placeholder="Enter current password"
+                                                style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
+                                        {loading ? 'Verifying...' : 'Verify Identity'}
+                                    </button>
+                                </form>
+                            ) : (
+                                <form onSubmit={handleChangePassword}>
+                                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                                        <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>New Password</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                            <FiLock color="#aaa" />
+                                            <input
+                                                type="password"
+                                                value={newPassword}
+                                                onChange={e => setNewPassword(e.target.value)}
+                                                placeholder="Create new password"
+                                                style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                                        <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Confirm New Password</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                            <FiCheck color="#aaa" />
+                                            <input
+                                                type="password"
+                                                value={confirmPassword}
+                                                onChange={e => setConfirmPassword(e.target.value)}
+                                                placeholder="Confirm match"
+                                                style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="btn-danger" disabled={loading} style={{ width: '100%' }}>
+                                        {loading ? 'Updating...' : 'Update Password'}
+                                    </button>
+                                </form>
+                            )}
+
+                            {/* Snackbar */}
+                            {snackbar.show && (
+                                <div style={{
+                                    position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)',
+                                    background: snackbar.type === 'error' ? '#ff7675' : '#55efc4',
+                                    color: 'white', padding: '8px 16px', borderRadius: '20px',
+                                    fontWeight: '500', fontSize: '0.85rem', whiteSpace: 'nowrap',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    animation: 'fadeIn 0.3s'
+                                }}>
+                                    {snackbar.message}
                                 </div>
-                            </div>
-                            <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>New Password</label>
-                                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
-                                    <FiLock color="#aaa" />
-                                    <input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={e => setNewPassword(e.target.value)}
-                                        placeholder="Create new password"
-                                        style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="form-group" style={{ marginBottom: '24px' }}>
-                                <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Confirm New Password</label>
-                                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
-                                    <FiCheck color="#aaa" />
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
-                                        placeholder="Confirm match"
-                                        style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
-                                    />
-                                </div>
-                            </div>
-                            <button type="submit" className="btn-danger" disabled={loading} style={{ width: '100%' }}>
-                                {loading ? 'Updating...' : 'Update Password'}
-                            </button>
-                        </form>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
