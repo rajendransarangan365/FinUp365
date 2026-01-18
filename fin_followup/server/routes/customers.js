@@ -33,46 +33,61 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-// 1. Add Customer (with files)
-router.post('/', upload.fields([{ name: 'photo' }, { name: 'audio' }]), async (req, res) => {
+// Configure Upload Fields
+const cpUpload = upload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'profilePic', maxCount: 1 },
+    { name: 'audio', maxCount: 1 }
+]);
+
+// 1. Add Customer (with Audio, Photo, Profile)
+router.post('/', cpUpload, async (req, res) => {
+    const { userId, name, customerName, phone, loanType, followUpDate } = req.body;
+
     try {
-        const { userId, name, phone, loanType } = req.body;
-
-        // Upload logic
-        let photoUrl = "";
-        let audioUrl = "";
-
-        if (req.files['photo']) {
-            const photoFile = req.files['photo'][0];
-            const result = await cloudinary.uploader.upload(photoFile.path, {
-                folder: "finup365/photos"
-            });
-            photoUrl = result.secure_url;
-            fs.unlinkSync(photoFile.path); // Clean up temp file
-        }
-
-        if (req.files['audio']) {
-            const audioFile = req.files['audio'][0];
-            const result = await cloudinary.uploader.upload(audioFile.path, {
-                resource_type: "video", // Audio is treated as video in Cloudinary
-                folder: "finup365/voice"
-            });
-            audioUrl = result.secure_url;
-            fs.unlinkSync(audioFile.path);
-        }
-
         const newCustomer = new Customer({
             userId,
             name,
+            customerName,
             phone,
             loanType,
-            photoUrl,
-            audioUrl
+            followUpDate: followUpDate || 'Today'
         });
 
-        await newCustomer.save();
-        res.json(newCustomer);
+        // 1. Upload Business Photo
+        if (req.files['photo']) {
+            const photoFile = req.files['photo'][0];
+            const result = await cloudinary.uploader.upload(photoFile.path, {
+                folder: "fin_followup_photos"
+            });
+            newCustomer.photoUrl = result.secure_url;
+            fs.unlinkSync(photoFile.path);
+        }
 
+        // 2. Upload Profile Pic
+        if (req.files['profilePic']) {
+            const profileFile = req.files['profilePic'][0];
+            const result = await cloudinary.uploader.upload(profileFile.path, {
+                folder: "fin_followup_profiles",
+                transformation: [{ width: 200, height: 200, crop: "fill", gravity: "face" }]
+            });
+            newCustomer.profilePicUrl = result.secure_url;
+            fs.unlinkSync(profileFile.path);
+        }
+
+        // 3. Upload Audio
+        if (req.files['audio']) {
+            const audioFile = req.files['audio'][0];
+            const result = await cloudinary.uploader.upload(audioFile.path, {
+                resource_type: "video",
+                folder: "fin_followup_audio"
+            });
+            newCustomer.audioUrl = result.secure_url;
+            fs.unlinkSync(audioFile.path);
+        }
+
+        await newCustomer.save();
+        res.status(201).json(newCustomer);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to add customer" });

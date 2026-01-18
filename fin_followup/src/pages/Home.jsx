@@ -14,6 +14,7 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
     const [showProfile, setShowProfile] = useState(false); // For Profile Dialog
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
 
     const handleLogout = () => {
         // ... logout logic ...
@@ -29,6 +30,8 @@ const Home = () => {
         // Better: let's treat user as a state but for now just force update the button.
         window.dispatchEvent(new Event('storage')); // trigger updates if we listened to it, but we can just use a state.
     };
+
+    const toggleView = () => setViewMode(prev => prev === 'list' ? 'grid' : 'list');
 
     const getUserInitial = () => {
         const u = JSON.parse(localStorage.getItem('user'));
@@ -132,6 +135,9 @@ const Home = () => {
                     <p className="crm-subtitle">Good evening</p>
                 </div>
                 <div className="header-actions">
+                    <button className="crm-icon-btn" onClick={toggleView} title="Toggle View">
+                        {viewMode === 'list' ? <FaThLarge /> : <FaList />}
+                    </button>
                     <button className="crm-icon-btn" onClick={handleLogout} title="Log Out">
                         <FaSignOutAlt color="#e74c3c" />
                     </button>
@@ -189,15 +195,18 @@ const Home = () => {
                         <span className="count-badge">{actionNeeded.length} leads</span>
                     </div>
                     {actionNeeded.length > 0 ? (
-                        <div className="crm-list">
-                            {actionNeeded.map(c => (
-                                <CustomerCard key={c.id} customer={c} onCall={handleCall} variant="urgent" />
+                        <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                            {actionNeeded.map(customer => (
+                                <CustomerCard
+                                    key={customer.id}
+                                    customer={customer}
+                                    onCall={handleCall}
+                                    variant="urgent"
+                                />
                             ))}
                         </div>
                     ) : (
-                        <div className="empty-state-card">
-                            <p>All caught up! 🎉</p>
-                        </div>
+                        <p className="empty-state">All caught up! Great job.</p>
                     )}
                 </section>
 
@@ -206,11 +215,11 @@ const Home = () => {
                     <div className="section-header">
                         <h2>📅 Upcoming</h2>
                     </div>
-                    <div className="crm-list">
+                    <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                         {upcoming.map(c => (
                             <CustomerCard key={c.id} customer={c} onCall={handleCall} variant="normal" />
                         ))}
-                        {upcoming.length === 0 && <p className="text-muted">No upcoming follow-ups.</p>}
+                        {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
                     </div>
                 </section>
 
@@ -218,11 +227,16 @@ const Home = () => {
                 {completed.length > 0 && (
                     <section className="crm-section">
                         <div className="section-header">
-                            <h2>📜 History</h2>
+                            <h2>✅ Closed / Done <span className="count-badge">{completed.length}</span></h2>
                         </div>
-                        <div className="crm-list">
-                            {completed.map(c => (
-                                <CustomerCard key={c.id} customer={c} onCall={handleCall} variant="completed" />
+                        <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                            {completed.map(customer => (
+                                <CustomerCard
+                                    key={customer.id}
+                                    customer={customer}
+                                    onCall={handleCall}
+                                    variant="completed"
+                                />
                             ))}
                         </div>
                     </section>

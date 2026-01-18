@@ -139,10 +139,65 @@
     font-weight: 600;
 }
 
+/* Grid View Toggle */
 .crm-list {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+}
+
+.crm-list.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    /* Google Photos style tiles */
     gap: 16px;
+}
+
+/* Adjust Card in Grid View */
+.crm-list.grid-view .crm-card {
+    flex-direction: column;
+    /* Stack avatar and info vertically */
+    align-items: center;
+    text-align: center;
+    padding: 20px 16px;
+}
+
+.crm-list.grid-view .crm-card .crm-avatar {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 60px;
+    height: 60px;
+    /* Larger avatar in grid */
+    font-size: 24px;
+}
+
+.crm-list.grid-view .crm-card .crm-card-content {
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+.crm-list.grid-view .crm-card .crm-info {
+    align-items: center;
+    width: 100%;
+}
+
+.crm-list.grid-view .crm-card .crm-status-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.crm-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    /* border: 1px solid #f0f0f0; Removed to use variants */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    /* For absolute pos of icons in grid */
 }
 
 .text-muted {

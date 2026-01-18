@@ -2,12 +2,14 @@ import mongoose from 'mongoose';
 
 const CustomerSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    name: { type: String, required: true },
+    name: { type: String, required: true }, // Business/Lead Name
+    customerName: { type: String },         // Contact Person Name
     phone: { type: String, required: true },
     loanType: { type: String },
     status: { type: String, default: 'NEW' },
     followUpDate: { type: String, default: 'Today' },
-    photoUrl: { type: String },
+    photoUrl: { type: String },             // Business Card / Shop Photo
+    profilePicUrl: { type: String },        // Customer Avatar
     audioUrl: { type: String },
     createdAt: { type: Date, default: Date.now }
 });

@@ -9,20 +9,30 @@ const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
     const isCompleted = variant === 'completed';
     const isNew = variant === 'new';
 
+    const getRandomColor = (name) => {
+        const colors = ['#FDA7DF', '#D980FA', '#12CBC4', '#5758BB', '#FFC312', '#C4E538'];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return colors[Math.abs(hash) % colors.length];
+    };
+
     return (
         <div className={`crm-card ${isUrgent ? 'urgent-border' : ''} ${isNew ? 'new-border' : ''} ${isCompleted ? 'completed-dim' : ''}`} onClick={() => onCall(customer)}>
             <div className="crm-card-content">
                 <div className="crm-avatar">
-                    {customer.photoUrl ? (
-                        <img src={customer.photoUrl} alt="avatar" />
+                    {customer.profilePicUrl ? (
+                        <img src={customer.profilePicUrl} alt="avatar" />
                     ) : (
-                        <div className="avatar-placeholder">{customer.name.charAt(0)}</div>
+                        <div className="avatar-placeholder" style={{ background: getRandomColor(customer.customerName || customer.name) }}>
+                            {(customer.customerName || customer.name || '?').charAt(0).toUpperCase()}
+                        </div>
                     )}
                 </div>
 
                 <div className="crm-info">
                     <h3 className="crm-name">{customer.name}</h3>
-                    <p className="crm-detail">{customer.agencyName}</p>
+                    {customer.customerName && <p className="crm-detail" style={{ fontWeight: 500, color: '#333' }}>👤 {customer.customerName}</p>}
+                    <p className="crm-detail">{customer.phone}</p>
                     <div className="crm-tags">
                         <span className="crm-tag">{customer.loanType}</span>
                         {customer.followUpDate && <span className="crm-date-tag">📅 {customer.followUpDate}</span>}
