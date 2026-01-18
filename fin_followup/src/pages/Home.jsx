@@ -92,11 +92,23 @@ const Home = () => {
             });
 
             // Optimistic Update
-            setCustomers(prev => prev.map(c =>
-                c.id === customerId
-                    ? { ...c, status: newStatus, followUpDate: updateData.nextDate }
-                    : c
-            ));
+            setCustomers(prev => prev.map(c => {
+                if (c.id === customerId) {
+                    const newHistoryItem = {
+                        date: new Date().toISOString(),
+                        action: newStatus === 'NORMAL' ? 'Follow Up Scheduled' : (newStatus === 'CONVERTED' ? 'Deal Closed' : 'Marked Not Interested'),
+                        note: updateData.note || '',
+                        nextFollowUp: updateData.nextDate
+                    };
+                    return {
+                        ...c,
+                        status: newStatus,
+                        followUpDate: updateData.nextDate,
+                        history: [...(c.history || []), newHistoryItem]
+                    };
+                }
+                return c;
+            }));
         } catch (e) {
             console.error(e);
             alert("Update failed");
