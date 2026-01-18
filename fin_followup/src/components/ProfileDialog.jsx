@@ -149,7 +149,18 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                     </div>
 
                     <h2 style={{ margin: 0, fontSize: '20px' }}>{user.name}</h2>
-                    <p style={{ margin: '4px 0 0', opacity: 0.8, fontSize: '14px' }}>{user.agencyName}</p>
+                    <div style={{
+                        background: 'rgba(255,255,255,0.9)',
+                        color: 'black',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        display: 'inline-block',
+                        marginTop: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                    }}>
+                        {user.agencyName}
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -195,7 +206,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                     />
                                 </div>
                             </div>
-                            <button type="submit" className="save-btn" disabled={loading} style={{ width: '100%' }}>
+                            <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%' }}>
                                 {loading ? 'Saving...' : 'Save Changes'}
                             </button>
                         </form>
@@ -242,7 +253,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                     />
                                 </div>
                             </div>
-                            <button type="submit" className="save-btn danger" disabled={loading} style={{ width: '100%' }}>
+                            <button type="submit" className="btn-danger" disabled={loading} style={{ width: '100%' }}>
                                 {loading ? 'Updating...' : 'Update Password'}
                             </button>
                         </form>
