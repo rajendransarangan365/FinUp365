@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch, FaSignOutAlt } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 
