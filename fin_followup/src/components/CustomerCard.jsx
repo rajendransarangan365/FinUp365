@@ -40,10 +40,23 @@ const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
                 </div>
 
                 <div className="crm-status-icon">
+                    {/* Status Emojis */}
                     {customer.status === 'NEW' && <span className="status-emoji" title="New">🌟</span>}
                     {customer.status === 'CONVERTED' && <span className="status-emoji" title="Closed">🎉</span>}
                     {customer.status === 'NOT_INTERESTED' && <span className="status-emoji" title="Not Interested">❌</span>}
                     {isUrgent && <div className="indicator-dot"></div>}
+
+                    {/* Quick Call Button */}
+                    <button
+                        className="call-action-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.href = `tel:${customer.phone}`;
+                        }}
+                        title="Call Customer"
+                    >
+                        <FaPhoneAlt />
+                    </button>
                 </div>
             </div>
         </div>
