@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
         // Generate Token
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            'SECRET_KEY_REPLACE_LATER',
+            process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );
 
