@@ -23,7 +23,7 @@ cloudinary.config({
 });
 
 // Multer Config (Temporary storage)
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: '/tmp' });
 
 // Middleware to check Auth (simplified)
 // In a real app, verify JWT from header
