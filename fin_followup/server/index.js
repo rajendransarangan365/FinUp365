@@ -37,7 +37,11 @@ app.get('/', (req, res) => {
     res.send('FinUp365 Backend is Running');
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Start Server (Only if running locally)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+export default app;
