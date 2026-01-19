@@ -102,9 +102,7 @@ const Home = () => {
                 formData.append('note', updateData.note);
                 formData.append('audio', updateData.audioBlob, 'status_update.webm');
 
-                const { data } = await api.patch(`/customers/${customerId}/status`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                const { data } = await api.patch(`/customers/${customerId}/status`, formData);
                 responseData = data;
             } else {
                 // Regular JSON Update
