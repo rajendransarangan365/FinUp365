@@ -127,21 +127,18 @@ router.get('/:userId', async (req, res) => {
 // 3. Update Status
 router.patch('/:id/status', upload.single('audio'), async (req, res) => {
     try {
-        console.log("PATCH Status Body:", req.body); // Debug Log
+
         const { status, followUpDate, note } = req.body;
         let audioUrl = null;
 
         // Upload Audio if present
         if (req.file) {
-            console.log("Audio File Received at Backend:", req.file.originalname, req.file.size);
             const result = await streamUpload(req.file.buffer, {
                 resource_type: "video",
                 folder: "fin_followup_history_audio"
             });
             audioUrl = result.secure_url;
-            console.log("Audio Uploaded to Cloudinary:", audioUrl);
         } else {
-            console.log("No Audio File in Request");
         }
 
         const historyEntry = {
@@ -151,6 +148,7 @@ router.patch('/:id/status', upload.single('audio'), async (req, res) => {
             nextFollowUp: followUpDate,
             audioUrl // Add audio URL to history
         };
+
 
         const updateFields = {
             status,
@@ -167,6 +165,10 @@ router.patch('/:id/status', upload.single('audio'), async (req, res) => {
             updateFields,
             { new: true }
         );
+
+        console.log("✅ Customer updated in DB. Latest history entry:",
+            customer.history[customer.history.length - 1]);
+
         res.json(customer);
     } catch (err) {
         console.error(err);

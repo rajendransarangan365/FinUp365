@@ -96,6 +96,10 @@ const Home = () => {
 
             if (updateData.audioBlob) {
                 // Use FormData for File Upload
+                console.log('📤 Audio Blob detected, size:', updateData.audioBlob.size, 'bytes');
+                console.log('📤 Audio Blob type:', updateData.audioBlob.type);
+                console.log('📤 Audio Blob instanceof Blob:', updateData.audioBlob instanceof Blob);
+
                 const formData = new FormData();
                 formData.append('status', newStatus);
 
@@ -105,9 +109,22 @@ const Home = () => {
                 }
 
                 formData.append('note', updateData.note || '');
-                formData.append('audio', updateData.audioBlob, 'status_update.webm');
 
-                const { data } = await api.patch(`/customers/${customerId}/status`, formData);
+                // Convert Blob to File with proper filename
+                const audioFile = new File([updateData.audioBlob], 'status_update.webm', {
+                    type: 'audio/webm'
+                });
+                console.log('📤 Created File object:', audioFile.name, audioFile.size, 'bytes');
+                formData.append('audio', audioFile);
+
+                console.log('📤 FormData created, sending to backend...');
+
+                const { data } = await api.patch(`/customers/${customerId}/status`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                console.log('✅ Backend response:', data);
                 responseData = data;
             } else {
                 // Regular JSON Update
