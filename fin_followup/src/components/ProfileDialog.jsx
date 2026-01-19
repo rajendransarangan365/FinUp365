@@ -376,6 +376,8 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                         aspectRatio={1}
                     />
                 )}
+
+
             </div>
         </div>
     );

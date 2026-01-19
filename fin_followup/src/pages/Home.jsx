@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 import logo from '../assets/logo.png';
@@ -17,12 +17,14 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
     const [showProfile, setShowProfile] = useState(false); // For Profile Dialog
+    const [showProfileMenu, setShowProfileMenu] = useState(false); // For Sidebar Menu
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
     const [filters, setFilters] = useState({
         status: 'ALL',
         dateRange: 'ALL',
         search: ''
     });
+    const [activeTab, setActiveTab] = useState('reminder');
 
     const handleLogout = () => {
         // ... logout logic ...
@@ -305,12 +307,10 @@ const Home = () => {
                     <button className="crm-icon-btn" onClick={toggleView} title="Toggle View">
                         {viewMode === 'list' ? <FaThLarge /> : <FaList />}
                     </button>
-                    <button className="crm-icon-btn" onClick={handleLogout} title="Log Out">
-                        <FaSignOutAlt color="#e74c3c" />
-                    </button>
+                    {/* Logout moved to Profile Dialog */}
                     <button
                         className="crm-icon-btn profile-btn"
-                        onClick={() => setShowProfile(true)}
+                        onClick={() => setShowProfileMenu(true)}
                         style={{ padding: 0 }}
                     >
                         {getUserPhoto() ? (
@@ -343,6 +343,37 @@ const Home = () => {
                 </div>
             </motion.div>
 
+            {/* Tabs Navigation */}
+            <div className="tabs-nav">
+                <button
+                    className={`tab-btn ${activeTab === 'new' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('new')}
+                >
+                    New
+                    {newLeads.length > 0 && <span className="count-badge new-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle' }}>{newLeads.length}</span>}
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'reminder' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('reminder')}
+                >
+                    Reminder
+                    {actionNeeded.length > 0 && <span className="count-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle' }}>{actionNeeded.length}</span>}
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('upcoming')}
+                >
+                    Upcoming
+                    {upcoming.length > 0 && <span style={{ opacity: 0.6, fontSize: '0.8em', marginLeft: '6px' }}>({upcoming.length})</span>}
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'closed' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('closed')}
+                >
+                    Closed
+                </button>
+            </div>
+
             {/* Filter Bar */}
             <FilterBar
                 onFilterChange={handleFilterChange}
@@ -354,8 +385,8 @@ const Home = () => {
             <div className="crm-content">
                 {/* Content Sections - Simplified for Visibility */}
 
-                {/* Section 0: New Arrivals (Fresh Leads) */}
-                {newLeads.length > 0 && (
+                {/* --- NEW TAB --- */}
+                {activeTab === 'new' && (
                     <motion.section
                         className="crm-section"
                         initial="hidden" animate="visible" variants={containerVariants}
@@ -364,75 +395,83 @@ const Home = () => {
                             <h2>✨ New Arrivals</h2>
                             <span className="count-badge new-badge">{newLeads.length} new</span>
                         </div>
+                        {newLeads.length > 0 ? (
+                            <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                {newLeads.map(c => (
+                                    <div key={c.id} className="crm-item-wrapper">
+                                        <CustomerCard customer={c} onCall={handleCall} variant="new" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="empty-state">No new leads at the moment.</p>
+                        )}
+                    </motion.section>
+                )}
+
+                {/* --- REMINDER TAB --- */}
+                {activeTab === 'reminder' && (
+                    <motion.section
+                        className="crm-section"
+                        initial="hidden" animate="visible" variants={containerVariants}
+                    >
+                        <div className="section-header">
+                            <h2>🚀 Action Required</h2>
+                            <button
+                                onClick={() => window.location.reload()}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--color-primary)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    textDecoration: 'underline'
+                                }}
+                            >
+                                Refresh Data
+                            </button>
+                            <span className="count-badge">{actionNeeded.length} leads</span>
+                        </div>
+                        {actionNeeded.length > 0 ? (
+                            <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                {actionNeeded.map(customer => (
+                                    <div key={customer.id} className="crm-item-wrapper">
+                                        <CustomerCard
+                                            customer={customer}
+                                            onCall={handleCall}
+                                            variant="urgent"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="empty-state">All caught up! Great job.</p>
+                        )}
+                    </motion.section>
+                )}
+
+                {/* --- UPCOMING TAB --- */}
+                {activeTab === 'upcoming' && (
+                    <motion.section
+                        className="crm-section"
+                        initial="hidden" animate="visible" variants={containerVariants}
+                    >
+                        <div className="section-header">
+                            <h2>📅 Upcoming</h2>
+                        </div>
                         <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                            {newLeads.map(c => (
+                            {upcoming.map(c => (
                                 <div key={c.id} className="crm-item-wrapper">
-                                    <CustomerCard customer={c} onCall={handleCall} variant="new" />
+                                    <CustomerCard customer={c} onCall={handleCall} variant="normal" />
                                 </div>
                             ))}
+                            {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
                         </div>
                     </motion.section>
                 )}
 
-                {/* Section 1: Priority (Red/Orange Theme) */}
-                <motion.section
-                    className="crm-section"
-                    initial="hidden" animate="visible" variants={containerVariants}
-                >
-                    <div className="section-header">
-                        <h2>🚀 Action Required</h2>
-                        <button
-                            onClick={() => window.location.reload()}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--color-primary)',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                                textDecoration: 'underline'
-                            }}
-                        >
-                            Refresh Data
-                        </button>
-                        <span className="count-badge">{actionNeeded.length} leads</span>
-                    </div>
-                    {actionNeeded.length > 0 ? (
-                        <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                            {actionNeeded.map(customer => (
-                                <div key={customer.id} className="crm-item-wrapper">
-                                    <CustomerCard
-                                        customer={customer}
-                                        onCall={handleCall}
-                                        variant="urgent"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="empty-state">All caught up! Great job.</p>
-                    )}
-                </motion.section>
-
-                {/* Section 2: Pipeline (Blue/Clean Theme) */}
-                <motion.section
-                    className="crm-section"
-                    initial="hidden" animate="visible" variants={containerVariants}
-                >
-                    <div className="section-header">
-                        <h2>📅 Upcoming</h2>
-                    </div>
-                    <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                        {upcoming.map(c => (
-                            <div key={c.id} className="crm-item-wrapper">
-                                <CustomerCard customer={c} onCall={handleCall} variant="normal" />
-                            </div>
-                        ))}
-                        {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
-                    </div>
-                </motion.section>
-
-                {/* Section 3: History (Muted) */}
-                {completed.length > 0 && (
+                {/* --- CLOSED TAB --- */}
+                {activeTab === 'closed' && (
                     <motion.section
                         className="crm-section"
                         initial="hidden" animate="visible" variants={containerVariants}
@@ -440,17 +479,21 @@ const Home = () => {
                         <div className="section-header">
                             <h2>✅ Closed / Done <span className="count-badge">{completed.length}</span></h2>
                         </div>
-                        <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                            {completed.map(customer => (
-                                <div key={customer.id} className="crm-item-wrapper">
-                                    <CustomerCard
-                                        customer={customer}
-                                        onCall={handleCall}
-                                        variant="completed"
-                                    />
-                                </div>
-                            ))}
-                        </div>
+                        {completed.length > 0 ? (
+                            <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                {completed.map(customer => (
+                                    <div key={customer.id} className="crm-item-wrapper">
+                                        <CustomerCard
+                                            customer={customer}
+                                            onCall={handleCall}
+                                            variant="completed"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="empty-state">No closed deals yet.</p>
+                        )}
                     </motion.section>
                 )}
             </div>
@@ -482,6 +525,36 @@ const Home = () => {
                     onClose={() => setShowProfile(false)}
                     onUpdateUser={handleUpdateUser}
                 />
+            )}
+
+            {/* Profile Sidebar Menu */}
+            {showProfileMenu && (
+                <>
+                    <div className="profile-sidebar-overlay" onClick={() => setShowProfileMenu(false)} />
+                    <div className="profile-sidebar">
+                        <div className="sidebar-header">
+                            <h3>Menu</h3>
+                            <button className="close-btn" onClick={() => setShowProfileMenu(false)}>
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        <div className="sidebar-menu">
+                            <button className="menu-item" onClick={() => {
+                                setShowProfileMenu(false);
+                                setShowProfile(true);
+                            }}>
+                                <FaUserCog />
+                                Profile Settings
+                            </button>
+
+                            <button className="menu-item logout" onClick={handleLogout}>
+                                <FaSignOutAlt />
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );
