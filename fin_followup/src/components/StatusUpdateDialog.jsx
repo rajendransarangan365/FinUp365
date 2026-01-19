@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
 import { FaMicrophone } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
+import AudioPlayer from './AudioPlayer';
 
 const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
     const [outcome, setOutcome] = useState('RESCHEDULE'); // RESCHEDULE | CONVERTED | NOT_INTERESTED
@@ -52,21 +53,16 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
 
     return (
         <div className="dialog-overlay">
-            <div className="dialog-card" style={{ position: 'relative' }}>
-                <button
-                    onClick={onClose}
-                    style={{
-                        position: 'absolute', top: 16, right: 16,
-                        background: '#f1f2f6', border: 'none',
-                        borderRadius: '50%', width: 32, height: 32,
-                        color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                        zIndex: 10
-                    }}
-                >
-                    <FiX size={18} />
-                </button>
-                <h3>Update Status: {customer.name}</h3>
-                <p>What happened?</p>
+            <div className="dialog-card">
+                {/* Header Action Row */}
+                <div className="dialog-header-row">
+                    <h3>Update Status</h3>
+                    <button className="close-btn" onClick={onClose} aria-label="Close">
+                        <FiX />
+                    </button>
+                </div>
+
+                <p className="dialog-subtitle">For: <strong>{customer.name}</strong></p>
 
                 <div className="outcome-chips">
                     <button
@@ -91,20 +87,20 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
 
                 {outcome === 'RESCHEDULE' && (
                     <div className="date-picker-section">
-                        <label>Next Follow Up:</label>
+                        <label>Next Follow Up</label>
                         <div className="preset-dates">
                             <button className="chip-sm" onClick={() => {
                                 const d = new Date(); d.setDate(d.getDate() + 1);
                                 setDate(d.toISOString().split('T')[0]);
-                            }}>+1 Day</button>
+                            }}>Tomw</button>
+                            <button className="chip-sm" onClick={() => {
+                                const d = new Date(); d.setDate(d.getDate() + 3);
+                                setDate(d.toISOString().split('T')[0]);
+                            }}>+3 Days</button>
                             <button className="chip-sm" onClick={() => {
                                 const d = new Date(); d.setDate(d.getDate() + 7);
                                 setDate(d.toISOString().split('T')[0]);
                             }}>+1 Week</button>
-                            <button className="chip-sm" onClick={() => {
-                                const d = new Date(); d.setMonth(d.getMonth() + 1);
-                                setDate(d.toISOString().split('T')[0]);
-                            }}>+1 Month</button>
                         </div>
                         <input
                             type="date"
@@ -116,27 +112,16 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                 )}
 
                 {/* Voice Note Section */}
-                <div style={{ marginBottom: '12px' }}>
+                <div className="voice-section">
                     <button
                         type="button"
                         onClick={toggleRecording}
-                        className={recording ? 'voice-btn recording' : 'voice-btn'}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '12px',
-                            border: '1px solid #eee',
-                            background: recording ? '#fee2e2' : '#f8f9fa',
-                            color: recording ? '#e74c3c' : '#555',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                            cursor: 'pointer', fontWeight: '500',
-                            animation: recording ? 'pulse 1.5s infinite' : 'none'
-                        }}
+                        className={`voice-btn ${recording ? 'recording' : ''}`}
                     >
                         <FaMicrophone />
                         {recording ? 'Stop Recording' : (audioBlob ? 'Re-record Voice Note' : 'Add Voice Note')}
                     </button>
-                    {audioBlob && <div style={{ fontSize: '12px', color: '#27ae60', marginTop: '4px', textAlign: 'center' }}>✓ Voice Note Recorded</div>}
+                    {audioBlob && <div className="voice-success">✓ Voice Note Recorded</div>}
                 </div>
 
                 <textarea
@@ -164,9 +149,10 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                                     </div>
                                     {item.note && <p className="history-note">"{item.note}"</p>}
                                     {item.audioUrl && (
-                                        <div style={{ marginTop: '8px' }}>
-                                            <audio controls src={item.audioUrl} style={{ width: '100%', height: '32px' }} />
-                                        </div>
+                                        <AudioPlayer
+                                            src={item.audioUrl}
+                                            title={`Voice Note - ${new Date(item.date).toLocaleDateString()}`}
+                                        />
                                     )}
                                     {item.nextFollowUp && <span className="history-next">Next: {item.nextFollowUp}</span>}
                                 </div>
@@ -177,9 +163,9 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
             </div>
             <style>{`
                 @keyframes pulse {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.02); }
-                    100% { transform: scale(1); }
+                    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+                    70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+                    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
                 }
             `}</style>
         </div>

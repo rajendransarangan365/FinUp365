@@ -4,6 +4,7 @@ import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList } from 'react-icons/f
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 import logo from '../assets/logo.png';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import api from '../services/api';
 import StatusUpdateDialog from '../components/StatusUpdateDialog';
@@ -26,10 +27,7 @@ const Home = () => {
     };
 
     const handleUpdateUser = (updatedUser) => {
-        // Trigger a re-render if needed, though state update in ProfileDialog might be enough if we re-read from localStorage
-        // Or we can keep a user state in Home. For now, force update via key or setCustomers hack? 
-        // Better: let's treat user as a state but for now just force update the button.
-        window.dispatchEvent(new Event('storage')); // trigger updates if we listened to it, but we can just use a state.
+        window.dispatchEvent(new Event('storage'));
     };
 
     const toggleView = () => setViewMode(prev => prev === 'list' ? 'grid' : 'list');
@@ -53,10 +51,25 @@ const Home = () => {
             try {
                 const { data } = await api.get(`/customers/${storedUser._id}`);
                 // Transform data to match UI expectations if needed
-                const transformed = data.map(c => ({
-                    ...c,
-                    id: c._id // Mongo _id to id
-                }));
+                console.log("Raw Customers Data:", data);
+                const transformed = data.map((c, index) => {
+                    // Normalize 'Today' to actual YYYY-MM-DD (Local Time)
+                    let fDate = c.followUpDate;
+                    if (fDate === 'Today') {
+                        const now = new Date();
+                        fDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                    }
+
+                    return {
+                        ...c,
+                        id: c._id || `temp-${index}-${Date.now()}`, // Fallback for Mongo _id
+                        followUpDate: fDate
+                    };
+                });
+                // Sort action needed by date? (Optional, but good for UX)
+                // transformed.sort((a,b) => new Date(a.followUpDate) - new Date(b.followUpDate));
+
+                console.log("Transformed Customers:", transformed);
                 setCustomers(transformed);
             } catch (error) {
                 console.error("Failed to fetch customers", error);
@@ -106,9 +119,6 @@ const Home = () => {
             // Optimistic Update (or use responseData)
             setCustomers(prev => prev.map(c => {
                 if (c.id === customerId) {
-                    // We can use responseData to get the exact history item, including the cloud URL
-                    // But for immediate feedback, we can just use the backend response directly which usually returns the updated customer
-                    // Or we can construct it manually. Let's use the backend response.
                     return { ...c, ...responseData, id: c.id };
                 }
                 return c;
@@ -121,35 +131,80 @@ const Home = () => {
 
     // ... filters ...
     // --- Smart Filtering Logic ---
-    const todayStr = new Date().toISOString().split('T')[0];
+    // --- Smart Filtering Logic ---
+    // Use local date for accurate day comparison
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
     // "New": Status is explicitly NEW
     const newLeads = customers.filter(c => c.status === 'NEW');
 
-    // "Action Needed": FollowUp is Today/Past AND status is NORMAL (not NEW, not Done)
+    // "Action Needed": Status is TODAY -OR- (Status is NORMAL and date is Today/Past)
     const actionNeeded = customers.filter(c => {
-        if (c.status === 'NEW' || c.status === 'CONVERTED' || c.status === 'NOT_INTERESTED' || c.status === 'DONE') return false;
-        return c.followUpDate <= todayStr;
+        // Exclude other statuses
+        if (['NEW', 'CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)) return false;
+
+        // Explicit TODAY status
+        if (c.status === 'TODAY') return true;
+
+        // Date check for NORMAL status
+        return c.followUpDate && c.followUpDate <= todayStr;
     });
 
-    // "Upcoming": Future date AND status is NORMAL
+    // "Upcoming": Future date AND (Status is NORMAL)
     const upcoming = customers.filter(c => {
-        if (c.status === 'NEW' || c.status === 'CONVERTED' || c.status === 'NOT_INTERESTED' || c.status === 'DONE') return false;
-        return c.followUpDate > todayStr;
+        // Exclude other statuses
+        if (['NEW', 'TODAY', 'CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)) return false;
+
+        return c.followUpDate && c.followUpDate > todayStr;
     });
 
     // "Completed": Deals Closed or Not Interested
     const completed = customers.filter(c =>
-        c.status === 'CONVERTED' || c.status === 'NOT_INTERESTED' || c.status === 'DONE'
+        ['CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)
     );
+
+    // console.log('--- Debug Filtering ---');
+    // ... (removed)
+
+    // Animation Variants
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        },
+        exit: { opacity: 0 } // Add exit variant
+    };
+
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1
+        }
+    };
 
     return (
         <div className="crm-dashboard">
-            {/* Soft UI Header */}
+            {/* Header */}
             <header className="crm-header">
                 <div>
-                    <img src={logo} alt="Fin FollowUp" className="brand-logo" style={{ maxHeight: '50px', height: 'auto' }} />
-                    <p className="crm-subtitle">Good evening</p>
+                    <motion.img
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        src={logo} alt="Fin FollowUp" className="brand-logo"
+                    />
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="crm-subtitle"
+                    >
+                        Good evening
+                    </motion.p>
                 </div>
                 <div className="header-actions">
                     <button className="crm-icon-btn" onClick={toggleView} title="Toggle View">
@@ -161,7 +216,7 @@ const Home = () => {
                     <button
                         className="crm-icon-btn profile-btn"
                         onClick={() => setShowProfile(true)}
-                        style={{ padding: 0, overflow: 'hidden' }}
+                        style={{ padding: 0 }}
                     >
                         {getUserPhoto() ? (
                             <img src={getUserPhoto()} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -173,7 +228,12 @@ const Home = () => {
             </header>
 
             {/* Stats / Quick Glance */}
-            <div className="stats-row">
+            <motion.div
+                className="stats-row"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
                 <div className="stat-card active">
                     <span className="stat-label">To Call</span>
                     <span className="stat-value">{actionNeeded.length}</span>
@@ -186,85 +246,124 @@ const Home = () => {
                     <span className="stat-label">Closed</span>
                     <span className="stat-value">{completed.length}</span>
                 </div>
-            </div>
+            </motion.div>
 
             <div className="crm-content">
+                {/* Content Sections - Simplified for Visibility */}
 
                 {/* Section 0: New Arrivals (Fresh Leads) */}
                 {newLeads.length > 0 && (
-                    <section className="crm-section">
+                    <motion.section
+                        className="crm-section"
+                        initial="hidden" animate="visible" variants={containerVariants}
+                    >
                         <div className="section-header">
                             <h2>✨ New Arrivals</h2>
                             <span className="count-badge new-badge">{newLeads.length} new</span>
                         </div>
-                        <div className="crm-list">
+                        <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                             {newLeads.map(c => (
-                                <CustomerCard key={c.id} customer={c} onCall={handleCall} variant="new" />
+                                <div key={c.id} className="crm-item-wrapper">
+                                    <CustomerCard customer={c} onCall={handleCall} variant="new" />
+                                </div>
                             ))}
                         </div>
-                    </section>
+                    </motion.section>
                 )}
 
                 {/* Section 1: Priority (Red/Orange Theme) */}
-                <section className="crm-section">
+                <motion.section
+                    className="crm-section"
+                    initial="hidden" animate="visible" variants={containerVariants}
+                >
                     <div className="section-header">
                         <h2>🚀 Action Required</h2>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--color-primary)',
+                                cursor: 'pointer',
+                                fontSize: '0.8rem',
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            Refresh Data
+                        </button>
                         <span className="count-badge">{actionNeeded.length} leads</span>
                     </div>
                     {actionNeeded.length > 0 ? (
                         <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                             {actionNeeded.map(customer => (
-                                <CustomerCard
-                                    key={customer.id}
-                                    customer={customer}
-                                    onCall={handleCall}
-                                    variant="urgent"
-                                />
+                                <div key={customer.id} className="crm-item-wrapper">
+                                    <CustomerCard
+                                        customer={customer}
+                                        onCall={handleCall}
+                                        variant="urgent"
+                                    />
+                                </div>
                             ))}
                         </div>
                     ) : (
                         <p className="empty-state">All caught up! Great job.</p>
                     )}
-                </section>
+                </motion.section>
 
                 {/* Section 2: Pipeline (Blue/Clean Theme) */}
-                <section className="crm-section">
+                <motion.section
+                    className="crm-section"
+                    initial="hidden" animate="visible" variants={containerVariants}
+                >
                     <div className="section-header">
                         <h2>📅 Upcoming</h2>
                     </div>
                     <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                         {upcoming.map(c => (
-                            <CustomerCard key={c.id} customer={c} onCall={handleCall} variant="normal" />
+                            <div key={c.id} className="crm-item-wrapper">
+                                <CustomerCard customer={c} onCall={handleCall} variant="normal" />
+                            </div>
                         ))}
                         {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
                     </div>
-                </section>
+                </motion.section>
 
                 {/* Section 3: History (Muted) */}
                 {completed.length > 0 && (
-                    <section className="crm-section">
+                    <motion.section
+                        className="crm-section"
+                        initial="hidden" animate="visible" variants={containerVariants}
+                    >
                         <div className="section-header">
                             <h2>✅ Closed / Done <span className="count-badge">{completed.length}</span></h2>
                         </div>
                         <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                             {completed.map(customer => (
-                                <CustomerCard
-                                    key={customer.id}
-                                    customer={customer}
-                                    onCall={handleCall}
-                                    variant="completed"
-                                />
+                                <div key={customer.id} className="crm-item-wrapper">
+                                    <CustomerCard
+                                        customer={customer}
+                                        onCall={handleCall}
+                                        variant="completed"
+                                    />
+                                </div>
                             ))}
                         </div>
-                    </section>
+                    </motion.section>
                 )}
             </div>
 
             {/* Floating Add Button - Neumorphic */}
-            <button className="crm-fab" onClick={() => navigate('/add-customer')}>
+            <motion.button
+                className="fab crm-fab"
+                onClick={() => navigate('/add-customer')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+            >
                 <FaPlus />
                 <span>Add Lead</span>
-            </button>
+            </motion.button>
 
             {selectedCustomer && (
                 <StatusUpdateDialog

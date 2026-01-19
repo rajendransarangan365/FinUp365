@@ -1,0 +1,114 @@
+/* Voice Assistant Item Container */
+.voice-assistant-item {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    /* Light background similar to card */
+    border-radius: 12px;
+    padding: 12px;
+    gap: 16px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1px;
+    /* Separation */
+}
+
+/* Button Section */
+.voice-assistant-item-button {
+    flex-shrink: 0;
+}
+
+.play-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3);
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.play-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px rgba(9, 132, 227, 0.4);
+}
+
+.play-button:active {
+    transform: scale(0.95);
+}
+
+/* Text & Controls Section */
+.voice-assistant-item-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    /* Flexbox text overflow fix */
+}
+
+/* Heading */
+.heading-51 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #2d3436;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Controls Container */
+.audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 14px;
+    /* Fixed height for alignment */
+}
+
+/* Progress Bar (Timeline) */
+.audio-controls-bar {
+    flex: 1;
+    height: 6px;
+    /* Matches user request somewhat, nice thin line */
+    background-color: #dfe6e9;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    /* Ensure fill doesn't spill */
+}
+
+.audio-controls-bar:hover {
+    height: 8px;
+    /* Slight expand interaction */
+    border-radius: 4px;
+}
+
+/* Current Progress Fill */
+.audio-controls-bar-current {
+    height: 100%;
+    background: linear-gradient(90deg, #0984e3, #00cec9);
+    width: 0%;
+    /* JS controlled */
+    border-radius: 3px;
+    transition: width 0.1s linear;
+}
+
+/* Time Display */
+.audio-controls-time {
+    font-size: 0.75rem;
+    color: #636e72;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    min-width: 35px;
+    text-align: right;
+}

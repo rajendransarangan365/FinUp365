@@ -51,7 +51,7 @@ router.post('/', cpUpload, async (req, res) => {
             customerName,
             phone,
             loanType,
-            followUpDate: followUpDate || 'Today'
+            followUpDate: followUpDate || new Date().toISOString().split('T')[0]
         });
 
         // 1. Upload Business Photo

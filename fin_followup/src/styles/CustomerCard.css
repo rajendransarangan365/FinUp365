@@ -1,43 +1,55 @@
-/* CRM Card Base */
+/* CRM Card Premium - Replical of Vercel Design */
 .crm-card {
-    background: white;
-    border-radius: 20px;
+    background: var(--color-surface);
+    border-radius: 16px;
+    /* Rounded corners */
     padding: 16px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0px;
+    /* Managed by grid/flex gap */
 }
 
-.crm-card:active {
-    transform: scale(0.98);
-}
-
+/* Border Indicators */
 .crm-card.urgent-border {
-    border-left: 4px solid #ff4757;
+    border-left: 5px solid #ff6b6b;
+    /* Red/Pinkish */
 }
 
-.crm-card.completed-dim {
-    opacity: 0.7;
-    filter: grayscale(0.5);
-    background: #fcfcfc;
+.crm-card.new-border {
+    border-left: 5px solid #8e44ad;
+    /* Deep Purple from screenshot */
+}
+
+.crm-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .crm-card-content {
     display: flex;
     align-items: center;
+    /* Center Vertically? No, Top aligned mostly */
     gap: 16px;
+    width: 100%;
 }
 
 /* Avatar */
 .crm-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+    width: 60px;
+    /* Larger */
+    height: 60px;
+    border-radius: 18px;
+    /* Squircle */
     overflow: hidden;
     flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .crm-avatar img {
@@ -49,98 +61,107 @@
 .avatar-placeholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+    /* Bright Lime Green for Test Company example */
+    background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
 }
 
-/* Info */
+/* Info Column */
 .crm-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
 }
 
 .crm-name {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #2b3674;
-    /* Dark blue-ish */
+    font-size: 1.0rem;
+    font-weight: 800;
+    color: #2c3e50;
+    /* Dark Blue-Gray */
+    letter-spacing: -0.3px;
 }
 
 .crm-detail {
-    margin: 2px 0 8px;
+    margin: 0;
     font-size: 0.85rem;
-    color: #a3aed0;
-}
-
-.crm-tags {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.crm-tag {
-    background: #f4f7fe;
-    color: #a3aed0;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-.crm-date-tag {
-    background: #fff0f0;
-    color: #ff4757;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-/* Status Icon */
-.crm-status-icon {
+    color: #7f8c8d;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    /* Space between emoji and button */
+    gap: 6px;
+    font-weight: 500;
 }
 
-.status-emoji {
+.icon-small {
+    font-size: 0.8rem;
+    color: #3498db;
+    /* Blue user icon */
+}
+
+.phone-text {
+    letter-spacing: 0.5px;
+    color: #bdc3c7;
+    /* Lighter grey for phone */
+}
+
+/* Date Badge */
+.crm-date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFECEC;
+    /* Light Red BG */
+    color: #FF5252;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 6px;
+    align-self: flex-start;
+}
+
+/* Right Actions Column */
+.crm-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 55px;
+    /* Match avatar height roughly */
+    padding-left: 8px;
+}
+
+.star-icon {
+    color: #f1c40f;
+    /* Yellow Star */
     font-size: 1.2rem;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
 }
 
 .call-action-btn {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: #00b894;
-    /* Soft Green */
+    /* Green Teal */
     color: white;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 16px;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0, 184, 148, 0.3);
     transition: transform 0.2s;
-    z-index: 2;
-    /* Ensure clickable */
 }
 
 .call-action-btn:active {
     transform: scale(0.9);
-}
-
-.indicator-dot {
-    width: 10px;
-    height: 10px;
-    background-color: #ff4757;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #ff4757;
 }
