@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import StatusUpdateDialog from '../components/StatusUpdateDialog';
 import ProfileDialog from '../components/ProfileDialog';
+import FilterBar from '../components/FilterBar';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -17,6 +18,11 @@ const Home = () => {
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
     const [showProfile, setShowProfile] = useState(false); // For Profile Dialog
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+    const [filters, setFilters] = useState({
+        status: 'ALL',
+        dateRange: 'ALL',
+        search: ''
+    });
 
     const handleLogout = () => {
         // ... logout logic ...
@@ -153,6 +159,68 @@ const Home = () => {
         }
     };
 
+    // Filter Handler
+    const handleFilterChange = (newFilters) => {
+        setFilters(newFilters);
+    };
+
+    // Apply Filters to Customers
+    const applyFilters = (customerList) => {
+        let filtered = [...customerList];
+
+        // Status Filter
+        if (filters.status !== 'ALL') {
+            filtered = filtered.filter(c => c.status === filters.status);
+        }
+
+        // Date Range Filter
+        if (filters.dateRange !== 'ALL') {
+            const today = new Date();
+            const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+            filtered = filtered.filter(c => {
+                if (!c.followUpDate) return false;
+
+                const followUpDate = new Date(c.followUpDate);
+                const followUpStr = c.followUpDate;
+
+                switch (filters.dateRange) {
+                    case 'TODAY':
+                        return followUpStr === todayStr;
+
+                    case 'THIS_WEEK':
+                        const weekStart = new Date(today);
+                        weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+                        return followUpDate >= weekStart && followUpDate <= weekEnd;
+
+                    case 'THIS_MONTH':
+                        return followUpDate.getMonth() === today.getMonth() &&
+                            followUpDate.getFullYear() === today.getFullYear();
+
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Search Filter
+        if (filters.search.trim() !== '') {
+            const searchLower = filters.search.toLowerCase();
+            filtered = filtered.filter(c => {
+                const name = (c.name || '').toLowerCase();
+                const customerName = (c.customerName || '').toLowerCase();
+                const phone = (c.phone || '').toLowerCase();
+                return name.includes(searchLower) ||
+                    customerName.includes(searchLower) ||
+                    phone.includes(searchLower);
+            });
+        }
+
+        return filtered;
+    };
+
     // ... filters ...
     // --- Smart Filtering Logic ---
     // --- Smart Filtering Logic ---
@@ -160,11 +228,14 @@ const Home = () => {
     const today = new Date();
     const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
+    // Apply filters first
+    const filteredCustomers = applyFilters(customers);
+
     // "New": Status is explicitly NEW
-    const newLeads = customers.filter(c => c.status === 'NEW');
+    const newLeads = filteredCustomers.filter(c => c.status === 'NEW');
 
     // "Action Needed": Status is TODAY -OR- (Status is NORMAL and date is Today/Past)
-    const actionNeeded = customers.filter(c => {
+    const actionNeeded = filteredCustomers.filter(c => {
         // Exclude other statuses
         if (['NEW', 'CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)) return false;
 
@@ -176,7 +247,7 @@ const Home = () => {
     });
 
     // "Upcoming": Future date AND (Status is NORMAL)
-    const upcoming = customers.filter(c => {
+    const upcoming = filteredCustomers.filter(c => {
         // Exclude other statuses
         if (['NEW', 'TODAY', 'CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)) return false;
 
@@ -184,7 +255,7 @@ const Home = () => {
     });
 
     // "Completed": Deals Closed or Not Interested
-    const completed = customers.filter(c =>
+    const completed = filteredCustomers.filter(c =>
         ['CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)
     );
 
@@ -271,6 +342,14 @@ const Home = () => {
                     <span className="stat-value">{completed.length}</span>
                 </div>
             </motion.div>
+
+            {/* Filter Bar */}
+            <FilterBar
+                onFilterChange={handleFilterChange}
+                activeFilters={filters}
+                totalCount={customers.length}
+                filteredCount={filteredCustomers.length}
+            />
 
             <div className="crm-content">
                 {/* Content Sections - Simplified for Visibility */}

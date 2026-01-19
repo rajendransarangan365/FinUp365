@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar } from 'react-icons/fa';
+import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle, FaBell, FaClock } from 'react-icons/fa';
 import '../styles/CustomerCard.css';
 
 const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
@@ -15,6 +15,40 @@ const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
         for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
         return colors[Math.abs(hash) % colors.length];
     };
+
+    // Get status badge configuration
+    const getStatusBadge = () => {
+        switch (customer.status) {
+            case 'NOT_INTERESTED':
+                return {
+                    icon: <FaTimesCircle />,
+                    text: 'Not Interested',
+                    className: 'status-badge-not-interested'
+                };
+            case 'CONVERTED':
+                return {
+                    icon: <FaCheckCircle />,
+                    text: 'Deal Closed',
+                    className: 'status-badge-converted'
+                };
+            case 'TODAY':
+                return {
+                    icon: <FaBell />,
+                    text: 'Attention Needed',
+                    className: 'status-badge-today'
+                };
+            case 'NORMAL':
+                return {
+                    icon: <FaClock />,
+                    text: 'Under Process',
+                    className: 'status-badge-normal'
+                };
+            default:
+                return null;
+        }
+    };
+
+    const statusBadge = getStatusBadge();
 
     return (
         <div
@@ -43,6 +77,14 @@ const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
                     {customer.followUpDate && (
                         <div className="crm-date-badge">
                             <FaCalendarAlt /> <span>{customer.followUpDate}</span>
+                        </div>
+                    )}
+
+                    {/* Status Badge */}
+                    {statusBadge && (
+                        <div className={`status-badge ${statusBadge.className}`}>
+                            {statusBadge.icon}
+                            <span>{statusBadge.text}</span>
                         </div>
                     )}
                 </div>
