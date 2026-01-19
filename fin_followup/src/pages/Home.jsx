@@ -98,19 +98,28 @@ const Home = () => {
                 // Use FormData for File Upload
                 const formData = new FormData();
                 formData.append('status', newStatus);
-                formData.append('followUpDate', updateData.nextDate);
-                formData.append('note', updateData.note);
+
+                // Only append date if it exists
+                if (updateData.nextDate) {
+                    formData.append('followUpDate', updateData.nextDate);
+                }
+
+                formData.append('note', updateData.note || '');
                 formData.append('audio', updateData.audioBlob, 'status_update.webm');
 
                 const { data } = await api.patch(`/customers/${customerId}/status`, formData);
                 responseData = data;
             } else {
                 // Regular JSON Update
-                const { data } = await api.patch(`/customers/${customerId}/status`, {
+                const payload = {
                     status: newStatus,
-                    followUpDate: updateData.nextDate,
-                    note: updateData.note
-                });
+                    note: updateData.note || ''
+                };
+                if (updateData.nextDate) {
+                    payload.followUpDate = updateData.nextDate;
+                }
+
+                const { data } = await api.patch(`/customers/${customerId}/status`, payload);
                 responseData = data;
             }
 

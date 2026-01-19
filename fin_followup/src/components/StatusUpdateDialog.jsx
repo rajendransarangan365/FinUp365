@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
-import { FaMicrophone } from 'react-icons/fa';
+import { FaMicrophone, FaTrash, FaCheckCircle } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
 import AudioPlayer from './AudioPlayer';
 
@@ -9,9 +9,14 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
     const [date, setDate] = useState('');
     const [note, setNote] = useState('');
 
+    // Loading State
+    const [isSaving, setIsSaving] = useState(false);
+
     // Audio Recorder State
     const [recording, setRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState(null);
+    const [audioUrl, setAudioUrl] = useState(null); // Preview URL
+    const [showToast, setShowToast] = useState(false);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
 
@@ -30,6 +35,14 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                 mediaRecorderRef.current.onstop = () => {
                     const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
                     setAudioBlob(blob);
+
+                    // Create Preview URL
+                    const url = URL.createObjectURL(blob);
+                    setAudioUrl(url);
+
+                    // Show Toast
+                    setShowToast(true);
+                    setTimeout(() => setShowToast(false), 3000);
                 };
                 mediaRecorderRef.current.start();
                 setRecording(true);
@@ -40,24 +53,46 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
         }
     };
 
-    const handleSave = () => {
-        onUpdate(customer.id, {
-            status: outcome, // Pass 'RESCHEDULE', 'CONVERTED', or 'NOT_INTERESTED'
-            outcome,
-            nextDate: date,
-            note,
-            audioBlob // Pass the recorded audio blob
-        });
-        onClose();
+    const handleDeleteAudio = () => {
+        setAudioBlob(null);
+        setAudioUrl(null);
+        setShowToast(false);
+    };
+
+    const handleSave = async () => {
+        if (!outcome) {
+            alert("Please select an outcome");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await onUpdate(customer.id, {
+                status: outcome,
+                outcome,
+                nextDate: date,
+                note,
+                audioBlob
+            });
+            onClose();
+        } catch (error) {
+            console.error("Save failed:", error);
+            setIsSaving(false);
+        }
     };
 
     return (
         <div className="dialog-overlay">
+            {showToast && (
+                <div className="toast-notification">
+                    <FaCheckCircle /> Audio Added!
+                </div>
+            )}
             <div className="dialog-card">
                 {/* Fixed Header */}
                 <div className="dialog-header-row">
                     <h3>Update Status</h3>
-                    <button className="close-btn" onClick={onClose} aria-label="Close">
+                    <button className="close-btn" onClick={onClose} disabled={isSaving} aria-label="Close">
                         <FiX />
                     </button>
                 </div>
@@ -141,33 +176,65 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                                 className="date-input"
+                                disabled={isSaving}
                             />
                         </div>
                     )}
 
                     {/* Voice Note Section */}
                     <div className="voice-section">
-                        <button
-                            type="button"
-                            onClick={toggleRecording}
-                            className={`voice-btn ${recording ? 'recording' : ''}`}
-                        >
-                            <FaMicrophone />
-                            {recording ? 'Stop Recording' : (audioBlob ? 'Re-record Voice Note' : 'Add Voice Note')}
-                        </button>
-                        {audioBlob && <div className="voice-success">✓ Voice Note Recorded</div>}
+                        {!audioUrl ? (
+                            <button
+                                type="button"
+                                onClick={toggleRecording}
+                                className={`voice-btn ${recording ? 'recording' : ''}`}
+                                disabled={isSaving}
+                            >
+                                <FaMicrophone />
+                                {recording ? 'Stop Recording' : 'Add Voice Note'}
+                            </button>
+                        ) : (
+                            <div className="audio-preview-container">
+                                <div style={{ flex: 1 }}>
+                                    <AudioPlayer src={audioUrl} title="New Recording" />
+                                </div>
+                                <button
+                                    className="delete-audio-btn"
+                                    onClick={handleDeleteAudio}
+                                    title="Delete Recording"
+                                    disabled={isSaving}
+                                >
+                                    <FaTrash />
+                                </button>
+                            </div>
+                        )}
                     </div>
+                    {audioBlob && showToast && <div className="voice-success">✓ Voice Note Recorded</div>}
 
                     <textarea
                         placeholder="Add a quick note..."
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         className="note-input"
+                        disabled={isSaving}
                     />
 
                     <div className="dialog-actions">
-                        <button className="btn-text" onClick={onClose}>Cancel</button>
-                        <button className="btn-primary" onClick={handleSave}>Save Update</button>
+                        <button className="btn-text" onClick={onClose} disabled={isSaving}>Cancel</button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            {isSaving ? (
+                                <>
+                                    <span className="spinner-sm"></span> Saving...
+                                </>
+                            ) : (
+                                'Save Update'
+                            )}
+                        </button>
                     </div>
 
                     {/* History Section */}
@@ -201,6 +268,18 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
                     70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
                     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+                }
+                .spinner-sm {
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid rgba(255,255,255,0.3);
+                    border-radius: 50%;
+                    border-top-color: #fff;
+                    animation: spin 1s ease-in-out infinite;
+                    display: inline-block;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
                 }
             `}</style>
         </div>

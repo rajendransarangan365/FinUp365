@@ -127,33 +127,44 @@ router.get('/:userId', async (req, res) => {
 // 3. Update Status
 router.patch('/:id/status', upload.single('audio'), async (req, res) => {
     try {
+        console.log("PATCH Status Body:", req.body); // Debug Log
         const { status, followUpDate, note } = req.body;
         let audioUrl = null;
 
         // Upload Audio if present
         if (req.file) {
+            console.log("Audio File Received at Backend:", req.file.originalname, req.file.size);
             const result = await streamUpload(req.file.buffer, {
                 resource_type: "video",
                 folder: "fin_followup_history_audio"
             });
             audioUrl = result.secure_url;
+            console.log("Audio Uploaded to Cloudinary:", audioUrl);
+        } else {
+            console.log("No Audio File in Request");
         }
 
         const historyEntry = {
             date: new Date(),
-            action: status === 'RESCHEDULE' ? 'Follow Up Scheduled' : (status === 'CONVERTED' ? 'Deal Closed' : 'Marked Not Interested'),
+            action: (status === 'RESCHEDULE' || status === 'NORMAL') ? 'Follow Up Scheduled' : (status === 'CONVERTED' ? 'Deal Closed' : 'Marked Not Interested'),
             note: note || '',
             nextFollowUp: followUpDate,
             audioUrl // Add audio URL to history
         };
 
+        const updateFields = {
+            status,
+            $push: { history: historyEntry }
+        };
+
+        // Only update followUpDate if provided and valid (not "undefined" string)
+        if (followUpDate && followUpDate !== 'undefined' && followUpDate !== 'null') {
+            updateFields.followUpDate = followUpDate;
+        }
+
         const customer = await Customer.findByIdAndUpdate(
             req.params.id,
-            {
-                status,
-                followUpDate,
-                $push: { history: historyEntry }
-            },
+            updateFields,
             { new: true }
         );
         res.json(customer);

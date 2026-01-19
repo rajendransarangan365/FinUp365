@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import AddCustomer from './pages/AddCustomer';
 import Register from './pages/Register';
+import PermissionRequest from './components/PermissionRequest';
 
 function App() {
   const [user, setUser] = React.useState(null);
@@ -29,6 +30,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <PermissionRequest />
       <Routes>
         <Route path="/login" element={
           !user ? <Login /> : (user.name ? <Navigate to="/" /> : <Navigate to="/register" />)
