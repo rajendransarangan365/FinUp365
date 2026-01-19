@@ -215,14 +215,32 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    /* Increased gap */
 }
 
 .crm-list.grid-view {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    /* Wider cards */
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+    .crm-list.grid-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .crm-list.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (min-width: 1201px) {
+    .crm-list.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
 }
 
 /* Empty State */

@@ -1,13 +1,18 @@
 import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
-import { FiX, FiCheck, FiCamera, FiLock, FiUser, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiX, FiCheck, FiCamera, FiLock, FiUser, FiBriefcase, FiEye, FiEyeOff, FiImage } from 'react-icons/fi';
 import api from '../services/api';
+import ImageCropper from './ImageCropper';
 
 const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const [name, setName] = useState(user.name || '');
     const [agencyName, setAgencyName] = useState(user.agencyName || '');
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(user.photoUrl || null);
+
+    // Image Cropper State
+    const [showCropper, setShowCropper] = useState(false);
+    const [imageSrc, setImageSrc] = useState(null);
 
     // Password State
     const [oldPassword, setOldPassword] = useState('');
@@ -47,9 +52,19 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const handleFileChange = (e) => {
         const selected = e.target.files[0];
         if (selected) {
-            setFile(selected);
-            setPreview(URL.createObjectURL(selected));
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageSrc(reader.result);
+                setShowCropper(true);
+            };
+            reader.readAsDataURL(selected);
         }
+    };
+
+    const handleCropComplete = (croppedBlob) => {
+        setFile(croppedBlob);
+        setPreview(URL.createObjectURL(croppedBlob));
+        setShowCropper(false);
     };
 
     const handleUpdateProfile = async (e) => {
@@ -152,8 +167,16 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                 user.name?.charAt(0) || 'U'
                             )}
                         </div>
+                        {/* Camera Button */}
                         <button
-                            onClick={() => fileInputRef.current.click()}
+                            onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/*';
+                                input.capture = 'environment';
+                                input.onchange = handleFileChange;
+                                input.click();
+                            }}
                             style={{
                                 position: 'absolute', bottom: 0, right: 0,
                                 background: '#FFF', border: 'none',
@@ -165,6 +188,22 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                         >
                             <FiCamera size={16} />
                         </button>
+
+                        {/* Gallery Button */}
+                        <button
+                            onClick={() => fileInputRef.current.click()}
+                            style={{
+                                position: 'absolute', bottom: 0, left: 0,
+                                background: '#FFF', border: 'none',
+                                borderRadius: '50%', width: 32, height: 32,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#4318FF'
+                            }}
+                        >
+                            <FiImage size={16} />
+                        </button>
+
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -327,6 +366,16 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                         </div>
                     )}
                 </div>
+
+                {/* Image Cropper Modal */}
+                {showCropper && (
+                    <ImageCropper
+                        imageSrc={imageSrc}
+                        onCropComplete={handleCropComplete}
+                        onCancel={() => setShowCropper(false)}
+                        aspectRatio={1}
+                    />
+                )}
             </div>
         </div>
     );

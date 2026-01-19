@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCamera, FaMicrophone, FaSave } from 'react-icons/fa';
+import { FiImage, FiUser, FiCreditCard } from 'react-icons/fi';
 import api from '../services/api';
 import '../styles/AddCustomer.css';
 
@@ -139,28 +140,92 @@ const AddCustomer = () => {
             <form onSubmit={handleSubmit} className="add-lead-form">
 
                 {/* 1. Hero Business Card Capture */}
-                <div className="photo-hero-section" onClick={() => businessInputRef.current.click()}>
+                <div className="photo-hero-section">
                     {previewUrl ? (
                         <div className="preview-container">
                             <img src={previewUrl} alt="Preview" className="hero-preview" />
                             <div className="edit-overlay"><FaCamera /> Change Card</div>
                         </div>
                     ) : (
-                        <div className="hero-placeholder">
+                        <div className="hero-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '20px' }}>
                             <div className="camera-circle">
-                                <FaCamera />
+                                <FiCreditCard size={40} />
                             </div>
-                            <h3>Scan Business Card</h3>
-                            <p>Tap to capture shop or card</p>
+                            <h3 style={{ margin: '16px 0 8px', textAlign: 'center' }}>Scan Business Card</h3>
+                            <p style={{ margin: '0 0 20px', textAlign: 'center' }}>Tap to capture shop or card</p>
+
+                            {/* Camera and Gallery Buttons */}
+                            <div style={{
+                                display: 'flex',
+                                gap: '12px',
+                                justifyContent: 'center',
+                                width: '100%',
+                                maxWidth: '400px'
+                            }}>
+                                {/* Camera Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = 'image/*';
+                                        input.capture = 'environment';
+                                        input.onchange = (e) => handleFileChange(e, 'business');
+                                        input.click();
+                                    }}
+                                    style={{
+                                        background: '#FFF',
+                                        border: '2px solid #4318FF',
+                                        borderRadius: '12px',
+                                        padding: '12px 24px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        color: '#4318FF',
+                                        fontWeight: '600',
+                                        fontSize: '14px',
+                                        boxShadow: '0 2px 8px rgba(67, 24, 255, 0.1)',
+                                        flex: 1
+                                    }}
+                                >
+                                    <FaCamera size={16} />
+                                    Camera
+                                </button>
+
+                                {/* Gallery Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => businessInputRef.current.click()}
+                                    style={{
+                                        background: '#FFF',
+                                        border: '2px solid #4318FF',
+                                        borderRadius: '12px',
+                                        padding: '12px 24px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        color: '#4318FF',
+                                        fontWeight: '600',
+                                        fontSize: '14px',
+                                        boxShadow: '0 2px 8px rgba(67, 24, 255, 0.1)',
+                                        flex: 1
+                                    }}
+                                >
+                                    <FiImage size={16} />
+                                    Gallery
+                                </button>
+                            </div>
                         </div>
                     )}
+
                     <input
                         type="file"
                         ref={businessInputRef}
                         onChange={(e) => handleFileChange(e, 'business')}
                         style={{ display: 'none' }}
                         accept="image/*"
-                        capture="environment"
                     />
                 </div>
 
@@ -169,30 +234,79 @@ const AddCustomer = () => {
 
                     {/* Profile Avatar Upload */}
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '-50px' }}>
-                        <div
-                            style={{
-                                width: '100px', height: '100px', borderRadius: '50%',
-                                background: 'white', border: '4px solid white',
-                                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                                overflow: 'hidden', position: 'relative',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer'
-                            }}
-                            onClick={() => profileInputRef.current.click()}
-                        >
-                            {profilePreview ? (
-                                <img src={profilePreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#4318FF' }}>
-                                    {customerName ? customerName.charAt(0).toUpperCase() : <FaCamera size={24} color="#ccc" />}
-                                </div>
-                            )}
-                            <div style={{
-                                position: 'absolute', bottom: 0, width: '100%', background: 'rgba(0,0,0,0.5)',
-                                color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px'
-                            }}>
-                                Photo
+                        <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                            <div
+                                style={{
+                                    width: '100px', height: '100px', borderRadius: '50%',
+                                    background: 'white', border: '4px solid white',
+                                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                    overflow: 'hidden', position: 'relative',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}
+                            >
+                                {profilePreview ? (
+                                    <img src={profilePreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#4318FF' }}>
+                                        {customerName ? customerName.charAt(0).toUpperCase() : <FiUser size={32} color="#ccc" />}
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Camera Button */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.capture = 'environment';
+                                    input.onchange = (e) => handleFileChange(e, 'profile');
+                                    input.click();
+                                }}
+                                style={{
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    right: 0,
+                                    background: '#FFF',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#4318FF'
+                                }}
+                            >
+                                <FaCamera size={14} />
+                            </button>
+
+                            {/* Gallery Button */}
+                            <button
+                                type="button"
+                                onClick={() => profileInputRef.current.click()}
+                                style={{
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    background: '#FFF',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#4318FF'
+                                }}
+                            >
+                                <FiImage size={14} />
+                            </button>
                         </div>
                         <input
                             type="file"

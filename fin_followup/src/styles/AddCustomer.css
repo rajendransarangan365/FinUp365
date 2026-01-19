@@ -149,48 +149,64 @@
 
 .input-group label {
     display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     color: var(--text-secondary);
     margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .clean-input {
     width: 100%;
-    border: none;
-    border-bottom: 2px solid #f0f0f0;
-    padding: 12px 0;
-    font-size: 1.1rem;
+    border: 2px solid #f4f7fe;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 1rem;
     font-weight: 500;
     color: var(--text-primary);
-    background: transparent;
-    transition: border-color 0.2s;
+    background: #f8f9fb;
+    transition: all 0.2s;
 }
 
 .clean-input:focus {
     outline: none;
-    border-bottom-color: var(--primary-color);
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
 }
 
 .phone-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 2px solid #f0f0f0;
+    border: 2px solid #f4f7fe;
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #f8f9fb;
+    transition: all 0.2s;
 }
 
 .phone-row:focus-within {
-    border-bottom-color: var(--primary-color);
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1);
 }
 
 .phone-row .clean-input {
-    border-bottom: none;
-    padding: 12px 0;
+    border: none;
+    padding: 0;
+    background: transparent;
+}
+
+.phone-row .clean-input:focus {
+    box-shadow: none;
 }
 
 .country-code {
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1rem;
 }
 
 /* Filter Chips with Scroll */
