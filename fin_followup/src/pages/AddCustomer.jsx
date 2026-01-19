@@ -4,12 +4,14 @@ import { FaArrowLeft, FaCamera, FaMicrophone, FaSave } from 'react-icons/fa';
 import api from '../services/api';
 import '../styles/AddCustomer.css';
 
+import ImageCropper from '../components/ImageCropper';
+
 const AddCustomer = () => {
     const navigate = useNavigate();
     const [name, setName] = useState(''); // Business Name
     const [customerName, setCustomerName] = useState(''); // New: Person Name
     const [phone, setPhone] = useState('');
-    const [loanType, setLoanType] = useState('');
+    const [loanType, setLoanType] = useState('Business');
     const [note, setNote] = useState('');
 
     const [photo, setPhoto] = useState(null); // Business Card
@@ -18,24 +20,44 @@ const AddCustomer = () => {
     const [profilePic, setProfilePic] = useState(null); // New: Avatar
     const [profilePreview, setProfilePreview] = useState(null);
 
+    // Cropper State
+    const [cropperOpen, setCropperOpen] = useState(false);
+    const [cropperImage, setCropperImage] = useState(null);
+    const [cropperAspect, setCropperAspect] = useState(4 / 3);
+    const [croppingTarget, setCroppingTarget] = useState(null); // 'business' or 'profile'
+
     const [uploading, setUploading] = useState(false);
 
     // Refs
     const businessInputRef = React.useRef(null);
     const profileInputRef = React.useRef(null);
 
-    const handleBusinessPhotoChange = (e) => {
-        if (e.target.files[0]) {
-            setPhoto(e.target.files[0]);
-            setPreviewUrl(URL.createObjectURL(e.target.files[0]));
+    const handleFileChange = (e, target) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.addEventListener('load', () => {
+                setCropperImage(reader.result);
+                setCroppingTarget(target);
+                setCropperAspect(target === 'business' ? 1.586 : 1); // Business Card ratio vs Square
+                setCropperOpen(true);
+            });
+            reader.readAsDataURL(file);
+            // Reset input so same file can be selected again
+            e.target.value = null;
         }
     };
 
-    const handleProfilePicChange = (e) => {
-        if (e.target.files[0]) {
-            setProfilePic(e.target.files[0]);
-            setProfilePreview(URL.createObjectURL(e.target.files[0]));
+    const handleCropComplete = async (croppedBlob) => {
+        if (croppingTarget === 'business') {
+            setPhoto(croppedBlob);
+            setPreviewUrl(URL.createObjectURL(croppedBlob));
+        } else if (croppingTarget === 'profile') {
+            setProfilePic(croppedBlob);
+            setProfilePreview(URL.createObjectURL(croppedBlob));
         }
+        setCropperOpen(false);
+        setCropperImage(null);
     };
 
     // ... Audio Recorder Logic (Kept Same) ...
@@ -83,12 +105,12 @@ const AddCustomer = () => {
             const formData = new FormData();
             formData.append('userId', storedUser._id);
             formData.append('name', name);
-            formData.append('customerName', customerName); // New Field
+            formData.append('customerName', customerName);
             formData.append('phone', phone);
             formData.append('loanType', loanType);
 
             if (photo) formData.append('photo', photo);
-            if (profilePic) formData.append('profilePic', profilePic); // New File
+            if (profilePic) formData.append('profilePic', profilePic);
             if (audioBlob) formData.append('audio', audioBlob, 'voice_note.webm');
 
             await api.post('/customers', formData, {
@@ -132,7 +154,14 @@ const AddCustomer = () => {
                             <p>Tap to capture shop or card</p>
                         </div>
                     )}
-                    <input type="file" ref={businessInputRef} onChange={handleBusinessPhotoChange} style={{ display: 'none' }} accept="image/*" capture="environment" />
+                    <input
+                        type="file"
+                        ref={businessInputRef}
+                        onChange={(e) => handleFileChange(e, 'business')}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                        capture="environment"
+                    />
                 </div>
 
                 {/* 2. Profile & Details */}
@@ -165,7 +194,13 @@ const AddCustomer = () => {
                                 Photo
                             </div>
                         </div>
-                        <input type="file" ref={profileInputRef} onChange={handleProfilePicChange} style={{ display: 'none' }} accept="image/*" />
+                        <input
+                            type="file"
+                            ref={profileInputRef}
+                            onChange={(e) => handleFileChange(e, 'profile')}
+                            style={{ display: 'none' }}
+                            accept="image/*"
+                        />
                     </div>
 
                     <div className="input-group">
@@ -245,6 +280,16 @@ const AddCustomer = () => {
                 </div>
 
             </form>
+
+            {/* Image Cropper Modal */}
+            {cropperOpen && (
+                <ImageCropper
+                    imageSrc={cropperImage}
+                    aspect={cropperAspect}
+                    onCropComplete={handleCropComplete}
+                    onClose={() => setCropperOpen(false)}
+                />
+            )}
         </div>
     );
 };

@@ -37,6 +37,12 @@ app.get('/', (req, res) => {
     res.send('FinUp365 Backend is Running');
 });
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error("Global Server Error:", err);
+    res.status(500).json({ error: err.message || "Internal Server Error" });
+});
+
 // Start Server (Only if running locally)
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {

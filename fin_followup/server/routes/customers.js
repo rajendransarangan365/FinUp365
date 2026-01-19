@@ -23,7 +23,25 @@ cloudinary.config({
 });
 
 // Multer Config (Temporary storage)
-const upload = multer({ dest: '/tmp' });
+// Multer Config (Temporary storage)
+// Multer Config (Temporary storage)
+// Multer Config (Memory storage for Vercel/Serverless)
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Helper: Stream Upload to Cloudinary
+const streamUpload = (fileBuffer, options) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+            if (result) {
+                resolve(result);
+            } else {
+                reject(error);
+            }
+        });
+        stream.write(fileBuffer);
+        stream.end();
+    });
+};
 
 // Middleware to check Auth (simplified)
 // In a real app, verify JWT from header
@@ -54,43 +72,45 @@ router.post('/', cpUpload, async (req, res) => {
             followUpDate: followUpDate || new Date().toISOString().split('T')[0]
         });
 
+        // Debug Logs
+        console.log("Headers:", req.headers['content-type']);
+        // console.log("Files:", req.files); // Don't log buffers, too large
+        console.log("Body:", req.body);
+
         // 1. Upload Business Photo
-        if (req.files['photo']) {
+        if (req.files && req.files['photo']) {
             const photoFile = req.files['photo'][0];
-            const result = await cloudinary.uploader.upload(photoFile.path, {
+            const result = await streamUpload(photoFile.buffer, {
                 folder: "fin_followup_photos"
             });
             newCustomer.photoUrl = result.secure_url;
-            fs.unlinkSync(photoFile.path);
         }
 
         // 2. Upload Profile Pic
-        if (req.files['profilePic']) {
+        if (req.files && req.files['profilePic']) {
             const profileFile = req.files['profilePic'][0];
-            const result = await cloudinary.uploader.upload(profileFile.path, {
+            const result = await streamUpload(profileFile.buffer, {
                 folder: "fin_followup_profiles",
                 transformation: [{ width: 200, height: 200, crop: "fill", gravity: "face" }]
             });
             newCustomer.profilePicUrl = result.secure_url;
-            fs.unlinkSync(profileFile.path);
         }
 
         // 3. Upload Audio
-        if (req.files['audio']) {
+        if (req.files && req.files['audio']) {
             const audioFile = req.files['audio'][0];
-            const result = await cloudinary.uploader.upload(audioFile.path, {
+            const result = await streamUpload(audioFile.buffer, {
                 resource_type: "video",
                 folder: "fin_followup_audio"
             });
             newCustomer.audioUrl = result.secure_url;
-            fs.unlinkSync(audioFile.path);
         }
 
         await newCustomer.save();
         res.status(201).json(newCustomer);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to add customer" });
+        console.error("Error in POST /customers:", err);
+        res.status(500).json({ error: "Failed to add customer: " + err.message });
     }
 });
 
@@ -112,12 +132,11 @@ router.patch('/:id/status', upload.single('audio'), async (req, res) => {
 
         // Upload Audio if present
         if (req.file) {
-            const result = await cloudinary.uploader.upload(req.file.path, {
+            const result = await streamUpload(req.file.buffer, {
                 resource_type: "video",
                 folder: "fin_followup_history_audio"
             });
             audioUrl = result.secure_url;
-            fs.unlinkSync(req.file.path);
         }
 
         const historyEntry = {
@@ -140,7 +159,6 @@ router.patch('/:id/status', upload.single('audio'), async (req, res) => {
         res.json(customer);
     } catch (err) {
         console.error(err);
-        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ error: "Update failed" });
     }
 });

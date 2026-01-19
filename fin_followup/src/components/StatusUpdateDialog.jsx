@@ -64,7 +64,39 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
 
                 {/* Scrollable Content */}
                 <div className="dialog-scroll-area">
-                    <p className="dialog-subtitle">For: <strong>{customer.name}</strong></p>
+
+                    {/* Redesigned Profile Header */}
+                    <div className="customer-profile-header">
+                        <div className="profile-top-row">
+                            {/* Avatar */}
+                            <div className="profile-avatar-container">
+                                {customer.profilePicUrl ? (
+                                    <img src={customer.profilePicUrl} alt="Profile" className="profile-avatar-img" />
+                                ) : (
+                                    <div className="profile-avatar-placeholder">
+                                        {customer.name.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="profile-info-container">
+                                <h4 className="profile-name">{customer.name}</h4>
+                                {customer.customerName && <p className="profile-subname">{customer.customerName}</p>}
+                                {customer.loanType && <span className="profile-badge">{customer.loanType}</span>}
+                            </div>
+                        </div>
+
+                        {/* Business Card (if exists) */}
+                        {customer.photoUrl && (
+                            <div className="business-card-section">
+                                <div className="business-card-framed">
+                                    <img src={customer.photoUrl} alt="Business Card" />
+                                </div>
+                                <span className="card-label">Business Card</span>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="outcome-chips">
                         <button
