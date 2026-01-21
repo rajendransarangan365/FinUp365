@@ -92,49 +92,41 @@ const FilterBar = ({ onFilterChange, activeFilters, totalCount, filteredCount })
             {/* Filter Chips Container */}
             <div className={`filter-chips-container ${showFilters ? 'show' : 'hide'}`}>
                 {/* Status Filters */}
-                <div className="filter-group">
-                    <label className="filter-label">Status:</label>
-                    <div className="filter-chips">
-                        {statusFilters.map(filter => (
-                            <button
-                                key={filter.value}
-                                className={`filter-chip ${activeFilters.status === filter.value ? 'active' : ''}`}
-                                onClick={() => handleStatusFilter(filter.value)}
-                            >
-                                {filter.icon}
-                                <span>{filter.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                {statusFilters.map(filter => (
+                    <button
+                        key={filter.value}
+                        className={`filter-chip ${activeFilters.status === filter.value ? 'active' : ''}`}
+                        onClick={() => handleStatusFilter(filter.value)}
+                    >
+                        {filter.icon}
+                        <span>{filter.label}</span>
+                    </button>
+                ))}
+
+                <div style={{ width: '1px', height: '24px', background: 'rgba(0,0,0,0.1)', margin: '0 8px' }}></div>
 
                 {/* Date Range Filters */}
-                <div className="filter-group">
-                    <label className="filter-label">Date Range:</label>
-                    <div className="filter-chips">
-                        {dateFilters.map(filter => (
-                            <button
-                                key={filter.value}
-                                className={`filter-chip ${activeFilters.dateRange === filter.value ? 'active' : ''}`}
-                                onClick={() => handleDateFilter(filter.value)}
-                            >
-                                <FaCalendarAlt />
-                                <span>{filter.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                {dateFilters.map(filter => (
+                    <button
+                        key={filter.value}
+                        className={`filter-chip ${activeFilters.dateRange === filter.value ? 'active' : ''}`}
+                        onClick={() => handleDateFilter(filter.value)}
+                    >
+                        <FaCalendarAlt />
+                        <span>{filter.label}</span>
+                    </button>
+                ))}
 
                 {/* Clear All & Results Count */}
-                <div className="filter-actions">
+                <div className="filter-actions" style={{ marginLeft: 'auto', border: 'none', padding: 0 }}>
                     {hasActiveFilters && (
                         <button className="clear-filters-btn" onClick={handleClearFilters}>
                             <FaTimes />
-                            <span>Clear All Filters</span>
+                            <span>Clear</span>
                         </button>
                     )}
                     <div className="results-count">
-                        Showing <strong>{filteredCount}</strong> of <strong>{totalCount}</strong> customers
+                        <strong>{filteredCount}</strong> results
                     </div>
                 </div>
             </div>
