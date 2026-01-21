@@ -4,6 +4,7 @@ import Login from './pages/Login';
 
 import Home from './pages/Home';
 import AddCustomer from './pages/AddCustomer';
+import MyCustomers from './pages/MyCustomers';
 import Register from './pages/Register';
 import PermissionRequest from './components/PermissionRequest';
 
@@ -45,6 +46,14 @@ function App() {
         } />
 
         <Route path="/add-customer" element={
+          user ? (user.name ? <AddCustomer /> : <Navigate to="/register" />) : <Navigate to="/login" />
+        } />
+
+        <Route path="/my-customers" element={
+          user ? (user.name ? <MyCustomers /> : <Navigate to="/register" />) : <Navigate to="/login" />
+        } />
+
+        <Route path="/edit-customer/:id" element={
           user ? (user.name ? <AddCustomer /> : <Navigate to="/register" />) : <Navigate to="/login" />
         } />
 

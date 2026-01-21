@@ -246,6 +246,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
 
                 <div style={{ padding: '24px' }}>
                     {activeTab === 'details' && (
+
                         <form onSubmit={handleUpdateProfile}>
                             <div className="form-group" style={{ marginBottom: '16px' }}>
                                 <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Full Name</label>
@@ -379,7 +380,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
 
 
             </div>
-        </div>
+        </div >
     );
 };
 

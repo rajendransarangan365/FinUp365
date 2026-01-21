@@ -23,13 +23,15 @@ const ImageCropper = ({ imageSrc, aspect, onCropComplete, onClose }) => {
 
     const showCroppedImage = useCallback(async () => {
         try {
+            console.log('🔄 Starting to crop image...');
             const croppedImage = await getCroppedImg(
                 imageSrc,
                 croppedAreaPixels
             );
+            console.log('✂️ Image cropped successfully, calling onCropComplete');
             onCropComplete(croppedImage);
         } catch (e) {
-            console.error(e);
+            console.error('❌ Error cropping image:', e);
             alert("Error cropping image: " + e.message);
         }
     }, [imageSrc, croppedAreaPixels, onCropComplete]);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaCamera, FaMicrophone, FaSave, FaMapMarkerAlt, FaCheck } from 'react-icons/fa';
 import { FiImage, FiUser, FiCreditCard } from 'react-icons/fi';
 import api from '../services/api';
@@ -10,6 +10,7 @@ import LocationPicker from '../components/LocationPicker';
 
 const AddCustomer = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [name, setName] = useState(''); // Business Name
     const [customerName, setCustomerName] = useState(''); // New: Person Name
     const [phone, setPhone] = useState('');
@@ -28,12 +29,55 @@ const AddCustomer = () => {
     const [cropperImage, setCropperImage] = useState(null);
     const [cropperAspect, setCropperAspect] = useState(4 / 3);
     const [croppingTarget, setCroppingTarget] = useState(null); // 'business' or 'profile'
+    const [croppingInProgress, setCroppingInProgress] = useState(false);
 
     // Location Picker State
     const [coordinates, setCoordinates] = useState(null);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
 
     const [uploading, setUploading] = useState(false);
+
+    // Fetch data if editing
+    React.useEffect(() => {
+        if (id) {
+            const fetchCustomer = async () => {
+                try {
+                    const storedUser = JSON.parse(localStorage.getItem('user'));
+                    if (!storedUser) return;
+                    const { data } = await api.get(`/customers/${storedUser._id}`);
+                    // Wait, the API I have is getByUserId. I don't have getById public endpoint? 
+                    // Actually I implemented PUT /:id and DELETE /:id. I did NOT implement GET /:id specifically, but I can use GET /:userId and find it, or quickly add GET /customer-details/:id? 
+                    // Re-checking implementation plan... I missed GET /:id. 
+                    // However, I can just filter from the array returned by GET /:userId if I don't want to add a new endpoint, OR I can add GET /:id now.
+                    // The "My Customers" page lists them, maybe I can pass data via state? navigate('...', {state: customer}). 
+                    // But direct link access won't work.
+                    // Let's USE the /:userId endpoint and find it client side for now to save time, or add GET /:id.
+                    // Actually I can just add GET /details/:id to backend, or use the list. 
+                    // Let's use the list for now since we just implemented PUT/DELETE. 
+
+                    // Actually, looking at customers.js, I have `router.put('/:id', ...)` and `router.delete('/:id', ...)`.
+                    // A `router.get('/details/:id')` would be best. 
+                    // But to avoid context switching, I'll just fetch all for user and find the one. Efficient enough for small lists.
+
+                    const found = data.find(c => c._id === id);
+                    if (found) {
+                        setName(found.name);
+                        setCustomerName(found.customerName || '');
+                        setPhone(found.phone);
+                        setAddress(found.address || '');
+                        setCoordinates(found.coordinates || null);
+                        setLoanType(found.loanType || 'Business');
+                        setPreviewUrl(found.photoUrl || null);
+                        setProfilePreview(found.profilePicUrl || null);
+                        // Audio? found.audioUrl - difficult to put back into blob. Just show existing.
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch customer for edit", err);
+                }
+            };
+            fetchCustomer();
+        }
+    }, [id]);
 
     // Refs
     const businessInputRef = React.useRef(null);
@@ -56,15 +100,35 @@ const AddCustomer = () => {
     };
 
     const handleCropComplete = async (croppedBlob) => {
-        if (croppingTarget === 'business') {
-            setPhoto(croppedBlob);
-            setPreviewUrl(URL.createObjectURL(croppedBlob));
-        } else if (croppingTarget === 'profile') {
-            setProfilePic(croppedBlob);
-            setProfilePreview(URL.createObjectURL(croppedBlob));
+        setCroppingInProgress(true);
+        try {
+            console.log('🖼️ Crop complete for:', croppingTarget);
+            console.log('📦 Cropped blob:', croppedBlob);
+
+            if (croppingTarget === 'business') {
+                // Revoke old blob URL to free memory
+                if (previewUrl && previewUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(previewUrl);
+                }
+                const newBlobUrl = URL.createObjectURL(croppedBlob);
+                console.log('✅ New business card preview URL:', newBlobUrl);
+                setPhoto(croppedBlob);
+                setPreviewUrl(newBlobUrl);
+            } else if (croppingTarget === 'profile') {
+                // Revoke old blob URL to free memory
+                if (profilePreview && profilePreview.startsWith('blob:')) {
+                    URL.revokeObjectURL(profilePreview);
+                }
+                const newBlobUrl = URL.createObjectURL(croppedBlob);
+                console.log('✅ New profile preview URL:', newBlobUrl);
+                setProfilePic(croppedBlob);
+                setProfilePreview(newBlobUrl);
+            }
+            setCropperOpen(false);
+            setCropperImage(null);
+        } finally {
+            setCroppingInProgress(false);
         }
-        setCropperOpen(false);
-        setCropperImage(null);
     };
 
     // ... Audio Recorder Logic (Kept Same) ...
@@ -124,12 +188,26 @@ const AddCustomer = () => {
             if (profilePic) formData.append('profilePic', profilePic);
             if (audioBlob) formData.append('audio', audioBlob, 'voice_note.webm');
 
-            await api.post('/customers', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            // Debug: Log what we're sending
+            console.log('📤 Form submission data:');
+            console.log('- Photo blob:', photo);
+            console.log('- Profile pic blob:', profilePic);
+            console.log('- Preview URL:', previewUrl);
+            console.log('- Profile Preview URL:', profilePreview);
 
-            alert("Customer Saved Successfully!");
-            navigate('/');
+            if (id) {
+                // Update
+                console.log('Updating customer with ID:', id);
+                console.log('Request URL:', `/customers/${id}`);
+                await api.put(`/customers/${id}`, formData);
+                alert("Customer Updated Successfully!");
+                navigate('/my-customers');
+            } else {
+                // Create
+                await api.post('/customers', formData);
+                alert("Customer Saved Successfully!");
+                navigate('/');
+            }
         } catch (error) {
             console.error("Error saving customer:", error);
             alert("Error saving: " + (error.response?.data?.error || error.message));
@@ -144,7 +222,7 @@ const AddCustomer = () => {
                 <button className="icon-btn-back" onClick={() => navigate(-1)}>
                     <FaArrowLeft />
                 </button>
-                <h1>Add New Lead</h1>
+                <h1>{id ? 'Edit Customer' : 'Add New Lead'}</h1>
             </header>
 
             <form onSubmit={handleSubmit} className="add-lead-form">
@@ -152,9 +230,27 @@ const AddCustomer = () => {
                 {/* 1. Hero Business Card Capture */}
                 <div className="photo-hero-section">
                     {previewUrl ? (
-                        <div className="preview-container">
+                        <div className="preview-container" onClick={() => businessInputRef.current.click()} style={{ cursor: 'pointer', position: 'relative' }}>
                             <img src={previewUrl} alt="Preview" className="hero-preview" />
                             <div className="edit-overlay"><FaCamera /> Change Card</div>
+                            {croppingInProgress && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    background: 'rgba(0,0,0,0.7)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    fontWeight: '600'
+                                }}>
+                                    Processing...
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="hero-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '20px' }}>
@@ -259,6 +355,25 @@ const AddCustomer = () => {
                                 ) : (
                                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#4318FF' }}>
                                         {customerName ? customerName.charAt(0).toUpperCase() : <FiUser size={32} color="#ccc" />}
+                                    </div>
+                                )}
+                                {croppingInProgress && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        background: 'rgba(0,0,0,0.7)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        borderRadius: '50%'
+                                    }}>
+                                        Processing...
                                     </div>
                                 )}
                             </div>
@@ -438,7 +553,7 @@ const AddCustomer = () => {
 
                 <div className="sticky-footer">
                     <button type="submit" className="save-lead-btn" disabled={uploading}>
-                        <FaSave /> {uploading ? 'Creating Lead...' : 'Save Lead'}
+                        <FaSave /> {uploading ? (id ? 'Updating...' : 'Creating Lead...') : (id ? 'Update Customer' : 'Save Lead')}
                     </button>
                 </div>
 

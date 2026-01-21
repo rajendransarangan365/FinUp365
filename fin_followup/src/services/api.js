@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use relative path for API, handled by Vite proxy in dev and Vercel rewrites in prod
-const API_URL = '/api';
+// Use full URL to avoid proxy issues with local HTTPS/HTTP mismatch
+const API_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
     baseURL: API_URL,

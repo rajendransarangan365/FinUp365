@@ -604,6 +604,14 @@ const Home = () => {
                                 Profile Settings
                             </button>
 
+                            <button className="menu-item" onClick={() => {
+                                setShowProfileMenu(false);
+                                navigate('/my-customers');
+                            }}>
+                                <FaList />
+                                My Customers
+                            </button>
+
                             <button className="menu-item logout" onClick={handleLogout}>
                                 <FaSignOutAlt />
                                 Log Out

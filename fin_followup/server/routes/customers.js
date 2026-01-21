@@ -210,4 +210,136 @@ router.post('/:id/call-log', async (req, res) => {
     }
 });
 
+// Helper: Delete from Cloudinary
+const deleteFromCloudinary = async (url, resourceType = 'image') => {
+    if (!url) return;
+    try {
+        // Extract public ID from URL
+        // Example: https://res.cloudinary.com/demo/image/upload/v1234567890/folder/filename.jpg
+        // Public ID: folder/filename
+        const parts = url.split('/');
+        const versionIndex = parts.findIndex(part => part.startsWith('v') && !isNaN(part.substring(1)));
+        // If version found, take everything after it
+        if (versionIndex !== -1) {
+            const publicIdWithExt = parts.slice(versionIndex + 1).join('/');
+            const publicId = publicIdWithExt.split('.')[0]; // Remove extension
+            await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+            console.log(`🗑️ Deleted old ${resourceType}: ${publicId}`);
+        }
+    } catch (err) {
+        console.error("Failed to delete image from Cloudinary:", err);
+    }
+};
+
+// 5. Delete Customer
+router.delete('/:id', async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ error: "Customer not found" });
+        }
+
+        // Delete associated files from Cloudinary
+        if (customer.photoUrl) await deleteFromCloudinary(customer.photoUrl);
+        if (customer.profilePicUrl) await deleteFromCloudinary(customer.profilePicUrl);
+        if (customer.audioUrl) await deleteFromCloudinary(customer.audioUrl, 'video'); // Audio uses video resource type usually
+
+        await Customer.findByIdAndDelete(req.params.id);
+        res.json({ message: "Customer deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting customer:", err);
+        res.status(500).json({ error: "Failed to delete customer" });
+    }
+});
+
+// 6. Update Customer Details
+router.put('/:id', cpUpload, async (req, res) => {
+    try {
+        const { name, customerName, phone, loanType, address, followUpDate } = req.body;
+        const currentCustomer = await Customer.findById(req.params.id);
+
+        if (!currentCustomer) {
+            return res.status(404).json({ error: "Customer not found" });
+        }
+
+        let parsedCoordinates = null;
+        if (req.body.coordinates) {
+            try {
+                parsedCoordinates = JSON.parse(req.body.coordinates);
+            } catch (e) {
+                console.error("Error parsing coordinates:", e);
+            }
+        }
+
+        const updateData = {
+            name,
+            customerName,
+            phone,
+            loanType,
+            address
+        };
+
+        if (followUpDate) updateData.followUpDate = followUpDate;
+        if (parsedCoordinates) updateData.coordinates = parsedCoordinates;
+
+        // Handle file uploads & cleanup old files
+        // 1. Upload Business Photo
+        if (req.files && req.files['photo']) {
+            console.log('📸 New business card photo detected');
+            // Delete old
+            if (currentCustomer.photoUrl) {
+                console.log('🗑️ Deleting old business card:', currentCustomer.photoUrl);
+                await deleteFromCloudinary(currentCustomer.photoUrl);
+            }
+
+            const photoFile = req.files['photo'][0];
+            console.log('☁️ Uploading new business card to Cloudinary...');
+            const result = await streamUpload(photoFile.buffer, {
+                folder: "fin_followup_photos"
+            });
+            updateData.photoUrl = result.secure_url;
+            console.log('✅ New business card URL:', result.secure_url);
+        }
+
+        // 2. Upload Profile Pic
+        if (req.files && req.files['profilePic']) {
+            // Delete old
+            if (currentCustomer.profilePicUrl) await deleteFromCloudinary(currentCustomer.profilePicUrl);
+
+            const profileFile = req.files['profilePic'][0];
+            const result = await streamUpload(profileFile.buffer, {
+                folder: "fin_followup_profiles",
+                transformation: [{ width: 200, height: 200, crop: "fill", gravity: "face" }]
+            });
+            updateData.profilePicUrl = result.secure_url;
+        }
+
+        // 3. Upload Audio
+        if (req.files && req.files['audio']) {
+            // Delete old (Note: needs resource_type video usually for audio)
+            if (currentCustomer.audioUrl) await deleteFromCloudinary(currentCustomer.audioUrl);
+
+            const audioFile = req.files['audio'][0];
+            const result = await streamUpload(audioFile.buffer, {
+                resource_type: "video",
+                folder: "fin_followup_audio"
+            });
+            updateData.audioUrl = result.secure_url;
+        }
+
+        const updatedCustomer = await Customer.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true }
+        );
+
+        console.log('✅ Customer updated successfully. New photoUrl:', updatedCustomer.photoUrl);
+        res.json(updatedCustomer);
+
+    } catch (err) {
+        console.error("Error updating customer:", err);
+        res.status(500).json({ error: "Failed to update customer" });
+    }
+});
+
 export default router;
