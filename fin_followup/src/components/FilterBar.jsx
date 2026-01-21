@@ -4,7 +4,7 @@ import '../styles/FilterBar.css';
 
 const FilterBar = ({ onFilterChange, activeFilters, totalCount, filteredCount }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [showFilters, setShowFilters] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
 
     const statusFilters = [
         { value: 'ALL', label: 'All', icon: <FaFilter /> },
@@ -77,9 +77,9 @@ const FilterBar = ({ onFilterChange, activeFilters, totalCount, filteredCount })
                     )}
                 </div>
 
-                {/* Toggle Filters Button (Mobile) */}
+                {/* Toggle Filters Button */}
                 <button
-                    className="toggle-filters-btn"
+                    className={`toggle-filters-btn ${showFilters ? 'active' : ''}`}
                     onClick={() => setShowFilters(!showFilters)}
                 >
                     <FaFilter />
