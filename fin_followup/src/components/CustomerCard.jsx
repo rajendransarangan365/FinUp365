@@ -2,7 +2,7 @@ import React from 'react';
 import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle, FaBell, FaClock } from 'react-icons/fa';
 import '../styles/CustomerCard.css';
 
-const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
+const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) => {
 
     // Variant styles
     const isUrgent = variant === 'urgent';
@@ -98,7 +98,11 @@ const CustomerCard = ({ customer, onCall, variant = 'normal' }) => {
                         className="call-action-btn"
                         onClick={(e) => {
                             e.stopPropagation();
-                            window.location.href = `tel:${customer.phone}`;
+                            if (onCallAction) {
+                                onCallAction(customer);
+                            } else {
+                                window.location.href = `tel:${customer.phone}`;
+                            }
                         }}
                     >
                         <FaPhoneAlt />

@@ -8,6 +8,7 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
     const [outcome, setOutcome] = useState('RESCHEDULE'); // RESCHEDULE | CONVERTED | NOT_INTERESTED
     const [date, setDate] = useState('');
     const [note, setNote] = useState('');
+    const [activeHistoryTab, setActiveHistoryTab] = useState('followups'); // 'followups' | 'calls'
 
     // Loading State
     const [isSaving, setIsSaving] = useState(false);
@@ -237,30 +238,96 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                         </button>
                     </div>
 
-                    {/* History Section */}
-                    {customer.history && customer.history.length > 0 && (
-                        <div className="history-section">
-                            <h4>📜 History</h4>
-                            <div className="history-list">
-                                {customer.history.slice().reverse().map((item, index) => (
-                                    <div key={index} className="history-item">
-                                        <div className="history-header">
-                                            <span className="history-date">{new Date(item.date).toLocaleDateString()}</span>
-                                            <span className="history-action">{item.action}</span>
-                                        </div>
-                                        {item.note && <p className="history-note">"{item.note}"</p>}
-                                        {item.audioUrl && (
-                                            <AudioPlayer
-                                                src={item.audioUrl}
-                                                title={`Voice Note - ${new Date(item.date).toLocaleDateString()}`}
-                                            />
-                                        )}
-                                        {item.nextFollowUp && <span className="history-next">Next: {item.nextFollowUp}</span>}
-                                    </div>
-                                ))}
-                            </div>
+                    {/* History Section with Tabs */}
+                    <div className="history-section" style={{ marginTop: '24px' }}>
+                        <div className="history-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+                            <button
+                                onClick={() => setActiveHistoryTab('followups')}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: activeHistoryTab === 'followups' ? '#e3f2fd' : 'transparent',
+                                    color: activeHistoryTab === 'followups' ? '#0984e3' : '#636e72',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                📜 Follow Ups
+                            </button>
+                            <button
+                                onClick={() => setActiveHistoryTab('calls')}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: activeHistoryTab === 'calls' ? '#e3f2fd' : 'transparent',
+                                    color: activeHistoryTab === 'calls' ? '#0984e3' : '#636e72',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                📞 Call Logs
+                            </button>
                         </div>
-                    )}
+
+                        {/* Follow Up History List */}
+                        {activeHistoryTab === 'followups' && (
+                            <div className="history-list">
+                                {customer.history && customer.history.length > 0 ? (
+                                    customer.history.slice().reverse().map((item, index) => (
+                                        <div key={index} className="history-item">
+                                            <div className="history-header">
+                                                <span className="history-date">{new Date(item.date).toLocaleDateString()}</span>
+                                                <span className="history-action">{item.action}</span>
+                                            </div>
+                                            {item.note && <p className="history-note">"{item.note}"</p>}
+                                            {item.audioUrl && (
+                                                <AudioPlayer
+                                                    src={item.audioUrl}
+                                                    title={`Voice Note - ${new Date(item.date).toLocaleDateString()}`}
+                                                />
+                                            )}
+                                            {item.nextFollowUp && <span className="history-next">Next: {item.nextFollowUp}</span>}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p style={{ textAlign: 'center', color: '#b2bec3', fontSize: '0.9rem', padding: '10px' }}>No follow-up history yet.</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Call Logs List */}
+                        {activeHistoryTab === 'calls' && (
+                            <div className="history-list">
+                                {customer.callHistory && customer.callHistory.length > 0 ? (
+                                    customer.callHistory.slice().reverse().map((call, index) => (
+                                        <div key={index} className="history-item" style={{ borderLeftColor: call.status === 'PICKED' ? '#00b894' : '#ff7675' }}>
+                                            <div className="history-header">
+                                                <span className="history-date">{new Date(call.date).toLocaleString()}</span>
+                                                <span
+                                                    className="history-action"
+                                                    style={{
+                                                        background: call.status === 'PICKED' ? 'rgba(0, 184, 148, 0.1)' : 'rgba(255, 118, 117, 0.1)',
+                                                        color: call.status === 'PICKED' ? '#00b894' : '#d63031'
+                                                    }}
+                                                >
+                                                    {call.status}
+                                                </span>
+                                            </div>
+                                            {call.note && <p className="history-note">"{call.note}"</p>}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p style={{ textAlign: 'center', color: '#b2bec3', fontSize: '0.9rem', padding: '10px' }}>No call logs yet.</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             <style>{`

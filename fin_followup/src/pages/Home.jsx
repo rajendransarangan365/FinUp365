@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import StatusUpdateDialog from '../components/StatusUpdateDialog';
 import ProfileDialog from '../components/ProfileDialog';
+import CallDispositionDialog from '../components/CallDispositionDialog';
 import FilterBar from '../components/FilterBar';
 
 const Home = () => {
@@ -16,6 +17,7 @@ const Home = () => {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCustomer, setSelectedCustomer] = useState(null); // For Dialog
+    const [callingCustomer, setCallingCustomer] = useState(null); // For Call Dialog
     const [showProfile, setShowProfile] = useState(false); // For Profile Dialog
     const [showProfileMenu, setShowProfileMenu] = useState(false); // For Sidebar Menu
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
@@ -93,6 +95,31 @@ const Home = () => {
     const handleCall = (customer) => {
         // ... existing ...
         setSelectedCustomer(customer);
+    };
+
+    const handleCallAction = (customer) => {
+        // 1. Trigger the actual call
+        window.location.href = `tel:${customer.phone}`;
+
+        // 2. Open the Disposition Dialog
+        setCallingCustomer(customer);
+    };
+
+    const handleSaveCallLog = async (customerId, logData) => {
+        try {
+            const { data } = await api.post(`/customers/${customerId}/call-log`, logData);
+
+            // Update local state
+            setCustomers(prev => prev.map(c => {
+                if (c.id === customerId) {
+                    return { ...c, ...data, id: c.id };
+                }
+                return c;
+            }));
+        } catch (error) {
+            console.error("Failed to save call log", error);
+            alert("Failed to save call log");
+        }
     };
 
     const handleUpdateStatus = async (customerId, updateData) => {
@@ -413,7 +440,7 @@ const Home = () => {
                             <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                                 {newLeads.map(c => (
                                     <div key={c.id} className="crm-item-wrapper">
-                                        <CustomerCard customer={c} onCall={handleCall} variant="new" />
+                                        <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="new" />
                                     </div>
                                 ))}
                             </div>
@@ -453,6 +480,7 @@ const Home = () => {
                                         <CustomerCard
                                             customer={customer}
                                             onCall={handleCall}
+                                            onCallAction={handleCallAction}
                                             variant="urgent"
                                         />
                                     </div>
@@ -476,7 +504,7 @@ const Home = () => {
                         <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
                             {upcoming.map(c => (
                                 <div key={c.id} className="crm-item-wrapper">
-                                    <CustomerCard customer={c} onCall={handleCall} variant="normal" />
+                                    <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="normal" />
                                 </div>
                             ))}
                             {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
@@ -500,6 +528,7 @@ const Home = () => {
                                         <CustomerCard
                                             customer={customer}
                                             onCall={handleCall}
+                                            onCallAction={handleCallAction}
                                             variant="completed"
                                         />
                                     </div>
@@ -530,6 +559,14 @@ const Home = () => {
                     customer={selectedCustomer}
                     onClose={() => setSelectedCustomer(null)}
                     onUpdate={handleUpdateStatus}
+                />
+            )}
+
+            {callingCustomer && (
+                <CallDispositionDialog
+                    customer={callingCustomer}
+                    onClose={() => setCallingCustomer(null)}
+                    onSave={handleSaveCallLog}
                 />
             )}
 

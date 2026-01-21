@@ -176,4 +176,27 @@ router.patch('/:id/status', upload.single('audio'), async (req, res) => {
     }
 });
 
+// 4. Log Call History
+router.post('/:id/call-log', async (req, res) => {
+    try {
+        const { status, note } = req.body;
+        const callEntry = {
+            date: new Date(),
+            status,
+            note: note || ''
+        };
+
+        const customer = await Customer.findByIdAndUpdate(
+            req.params.id,
+            { $push: { callHistory: callEntry } },
+            { new: true }
+        );
+
+        res.json(customer);
+    } catch (err) {
+        console.error("Error logging call:", err);
+        res.status(500).json({ error: "Failed to log call" });
+    }
+});
+
 export default router;

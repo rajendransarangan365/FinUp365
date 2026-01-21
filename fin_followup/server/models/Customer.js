@@ -18,6 +18,11 @@ const CustomerSchema = new mongoose.Schema({
         nextFollowUp: String,
         audioUrl: String
     }],
+    callHistory: [{
+        date: { type: Date, default: Date.now },
+        status: { type: String, enum: ['PICKED', 'DECLINED', 'REJECTED'] },
+        note: String
+    }],
     createdAt: { type: Date, default: Date.now }
 });
 
