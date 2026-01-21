@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 import logo from '../assets/logo.png';
@@ -19,6 +19,7 @@ const Home = () => {
     const [showProfile, setShowProfile] = useState(false); // For Profile Dialog
     const [showProfileMenu, setShowProfileMenu] = useState(false); // For Sidebar Menu
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+    const [showStats, setShowStats] = useState(false); // Stats visibility toggle
     const [filters, setFilters] = useState({
         status: 'ALL',
         dateRange: 'ALL',
@@ -304,6 +305,14 @@ const Home = () => {
                     </motion.p>
                 </div>
                 <div className="header-actions">
+                    <button
+                        className={`crm-icon-btn ${showStats ? 'active' : ''}`}
+                        onClick={() => setShowStats(!showStats)}
+                        title="Toggle Stats"
+                        style={{ color: showStats ? 'var(--color-primary)' : 'inherit' }}
+                    >
+                        <FaChartBar />
+                    </button>
                     <button className="crm-icon-btn" onClick={toggleView} title="Toggle View">
                         {viewMode === 'list' ? <FaThLarge /> : <FaList />}
                     </button>
@@ -323,25 +332,30 @@ const Home = () => {
             </header>
 
             {/* Stats / Quick Glance */}
-            <motion.div
-                className="stats-row"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
-                <div className="stat-card active">
-                    <span className="stat-label">To Call</span>
-                    <span className="stat-value">{actionNeeded.length}</span>
-                </div>
-                <div className="stat-card">
-                    <span className="stat-label">Pipeline</span>
-                    <span className="stat-value">{upcoming.length}</span>
-                </div>
-                <div className="stat-card">
-                    <span className="stat-label">Closed</span>
-                    <span className="stat-value">{completed.length}</span>
-                </div>
-            </motion.div>
+            <AnimatePresence>
+                {showStats && (
+                    <motion.div
+                        className="stats-row"
+                        initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="stat-card active">
+                            <span className="stat-label">To Call</span>
+                            <span className="stat-value">{actionNeeded.length}</span>
+                        </div>
+                        <div className="stat-card">
+                            <span className="stat-label">Pipeline</span>
+                            <span className="stat-value">{upcoming.length}</span>
+                        </div>
+                        <div className="stat-card">
+                            <span className="stat-label">Closed</span>
+                            <span className="stat-value">{completed.length}</span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Tabs Navigation */}
             <div className="tabs-nav">
