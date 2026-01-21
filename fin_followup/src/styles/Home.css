@@ -18,16 +18,19 @@
 
 /* Header */
 .crm-header {
-    padding: 24px 24px 16px 24px;
+    padding: 16px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--surface-color);
-    box-shadow: var(--shadow-sm);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     position: sticky;
     top: 0;
     z-index: 50;
     margin-bottom: 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .brand-wrapper {
@@ -36,16 +39,26 @@
 }
 
 .brand-logo {
-    height: 40px;
+    height: 50px;
+    /* Increased size for better visibility */
     width: auto;
     object-fit: contain;
+    margin-bottom: 2px;
 }
 
 .crm-subtitle {
     color: var(--text-secondary);
-    font-size: 0.85rem;
-    margin-top: 4px;
-    font-weight: 500;
+    font-size: 0.95rem;
+    /* Larger text */
+    margin-top: 2px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    background: linear-gradient(90deg, var(--color-primary), #4285F4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* Gradient Text */
+    display: inline-block;
 }
 
 .header-actions {
@@ -55,29 +68,45 @@
 }
 
 .crm-icon-btn {
-    background: transparent;
+    background: white;
     border: 1px solid rgba(0, 0, 0, 0.05);
     /* Subtle border */
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    color: var(--text-primary);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    /* Softer square rounded */
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
 }
 
 .crm-icon-btn:hover {
-    background: var(--color-secondary-container);
+    background: var(--surface-color);
     color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: transparent;
 }
 
 .profile-btn {
-    padding: 0;
+    padding: 2px;
     overflow: hidden;
-    border: 2px solid var(--color-primary-container);
+    border: 2px solid transparent;
+    /* Prepare for gradient border if needed, or keeping clean */
+    background: white;
+    border-radius: 50%;
+    /* Keep profile circular */
+}
+
+/* Add a subtle indicator for active state if needed */
+.crm-icon-btn.active {
+    background: var(--color-primary-container);
+    color: var(--color-primary);
+    border-color: transparent;
 }
 
 /* Stats Row */

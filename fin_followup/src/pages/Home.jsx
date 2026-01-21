@@ -316,7 +316,7 @@ const Home = () => {
         <div className="crm-dashboard">
             {/* Header */}
             <header className="crm-header">
-                <div>
+                <div className="brand-wrapper">
                     <motion.img
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -328,7 +328,12 @@ const Home = () => {
                         transition={{ delay: 0.2 }}
                         className="crm-subtitle"
                     >
-                        Good evening
+                        {(() => {
+                            const hour = new Date().getHours();
+                            if (hour < 12) return 'Good morning';
+                            if (hour < 18) return 'Good afternoon';
+                            return 'Good evening';
+                        })()}
                     </motion.p>
                 </div>
                 <div className="header-actions">
