@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaCamera, FaMicrophone, FaSave } from 'react-icons/fa';
+import { FaArrowLeft, FaCamera, FaMicrophone, FaSave, FaMapMarkerAlt, FaCheck } from 'react-icons/fa';
 import { FiImage, FiUser, FiCreditCard } from 'react-icons/fi';
 import api from '../services/api';
 import '../styles/AddCustomer.css';
 
 import ImageCropper from '../components/ImageCropper';
+import LocationPicker from '../components/LocationPicker';
 
 const AddCustomer = () => {
     const navigate = useNavigate();
     const [name, setName] = useState(''); // Business Name
     const [customerName, setCustomerName] = useState(''); // New: Person Name
     const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState(''); // New: Address State
     const [loanType, setLoanType] = useState('Business');
     const [note, setNote] = useState('');
 
@@ -26,6 +28,10 @@ const AddCustomer = () => {
     const [cropperImage, setCropperImage] = useState(null);
     const [cropperAspect, setCropperAspect] = useState(4 / 3);
     const [croppingTarget, setCroppingTarget] = useState(null); // 'business' or 'profile'
+
+    // Location Picker State
+    const [coordinates, setCoordinates] = useState(null);
+    const [showLocationPicker, setShowLocationPicker] = useState(false);
 
     const [uploading, setUploading] = useState(false);
 
@@ -108,6 +114,10 @@ const AddCustomer = () => {
             formData.append('name', name);
             formData.append('customerName', customerName);
             formData.append('phone', phone);
+            formData.append('address', address);
+            if (coordinates) {
+                formData.append('coordinates', JSON.stringify(coordinates));
+            }
             formData.append('loanType', loanType);
 
             if (photo) formData.append('photo', photo);
@@ -355,6 +365,45 @@ const AddCustomer = () => {
                         </div>
                     </div>
 
+
+                    <div className="input-group">
+                        <label>Address / Location</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <input
+                                type="text"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                placeholder="e.g. 123 Main St, New York"
+                                className="clean-input"
+                                style={{ flex: 1 }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowLocationPicker(true)}
+                                style={{
+                                    background: coordinates ? '#E3F2FD' : '#f5f6fa',
+                                    border: coordinates ? '1px solid #2196F3' : '1px solid #dcdde1',
+                                    borderRadius: '12px',
+                                    padding: '0 12px',
+                                    cursor: 'pointer',
+                                    color: coordinates ? '#2196F3' : '#7f8c8d',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                                title="Pick on Map"
+                            >
+                                <FaMapMarkerAlt size={18} />
+                                {coordinates && <FaCheck size={12} style={{ marginLeft: '4px' }} />}
+                            </button>
+                        </div>
+                        {coordinates && (
+                            <div style={{ fontSize: '0.75rem', color: '#2196F3', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <FaCheck size={10} /> Location Pinned ({coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)})
+                            </div>
+                        )}
+                    </div>
+
                     <div className="input-group">
                         <label>Category</label>
                         <div className="chip-row">
@@ -393,18 +442,31 @@ const AddCustomer = () => {
                     </button>
                 </div>
 
-            </form>
+            </form >
 
             {/* Image Cropper Modal */}
-            {cropperOpen && (
-                <ImageCropper
-                    imageSrc={cropperImage}
-                    aspect={cropperAspect}
-                    onCropComplete={handleCropComplete}
-                    onClose={() => setCropperOpen(false)}
+            {
+                cropperOpen && (
+                    <ImageCropper
+                        imageSrc={cropperImage}
+                        aspect={cropperAspect}
+                        onCropComplete={handleCropComplete}
+                        onClose={() => setCropperOpen(false)}
+                    />
+                )
+            }
+
+            {/* Location Picker Modal */}
+            {showLocationPicker && (
+                <LocationPicker
+                    onClose={() => setShowLocationPicker(false)}
+                    onConfirm={(coords) => {
+                        setCoordinates(coords);
+                        setShowLocationPicker(false);
+                    }}
                 />
             )}
-        </div>
+        </div >
     );
 };
 

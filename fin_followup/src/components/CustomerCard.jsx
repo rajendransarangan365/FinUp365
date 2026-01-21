@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle, FaBell, FaClock } from 'react-icons/fa';
+import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle, FaBell, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import '../styles/CustomerCard.css';
 
 const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) => {
@@ -72,6 +72,7 @@ const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) =>
                     <h3 className="crm-name">{customer.name}</h3>
                     {customer.customerName && <p className="crm-detail"><FaUser className="icon-small" /> {customer.customerName}</p>}
                     <p className="crm-detail phone-text">{customer.phone}</p>
+                    {customer.address && <p className="crm-detail"><FaMapMarkerAlt className="icon-small" /> {customer.address}</p>}
 
                     {/* Date Badge moved here */}
                     {customer.followUpDate && (
@@ -116,6 +117,29 @@ const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) =>
                 <div className="crm-actions">
                     {/* Star Icon for New/Important */}
                     {customer.status === 'NEW' && <FaStar className="star-icon" />}
+
+                    <button
+                        className="call-action-btn navigate-btn"
+                        style={{ backgroundColor: '#0984e3' }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            let query = "";
+                            if (customer.coordinates && customer.coordinates.lat !== undefined && customer.coordinates.lng !== undefined) {
+                                query = `${customer.coordinates.lat},${customer.coordinates.lng}`;
+                            } else {
+                                query = encodeURIComponent(customer.address || customer.phone || "");
+                            }
+
+                            if (query) {
+                                window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+                            } else {
+                                alert("No address or phone number available for navigation.");
+                            }
+                        }}
+                        title="Navigate"
+                    >
+                        <FaMapMarkerAlt />
+                    </button>
 
                     {/* Call Button */}
                     <button

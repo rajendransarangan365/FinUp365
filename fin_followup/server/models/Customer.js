@@ -5,6 +5,11 @@ const CustomerSchema = new mongoose.Schema({
     name: { type: String, required: true }, // Business/Lead Name
     customerName: { type: String },         // Contact Person Name
     phone: { type: String, required: true },
+    address: { type: String }, // New: Customer Address for Navigation
+    coordinates: {
+        lat: Number,
+        lng: Number
+    },
     loanType: { type: String },
     status: { type: String, default: 'NEW' },
     followUpDate: { type: String, default: 'Today' },

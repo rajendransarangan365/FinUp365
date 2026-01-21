@@ -176,11 +176,11 @@
 /* Right Actions Column */
 .crm-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    height: 55px;
-    padding-left: 8px;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-left: 16px;
 }
 
 .grid-view .crm-actions {

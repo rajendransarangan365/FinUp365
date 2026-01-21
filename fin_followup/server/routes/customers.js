@@ -60,7 +60,16 @@ const cpUpload = upload.fields([
 
 // 1. Add Customer (with Audio, Photo, Profile)
 router.post('/', cpUpload, async (req, res) => {
-    const { userId, name, customerName, phone, loanType, followUpDate } = req.body;
+    const { userId, name, customerName, phone, loanType, address, followUpDate } = req.body;
+
+    let parsedCoordinates = null;
+    if (req.body.coordinates) {
+        try {
+            parsedCoordinates = JSON.parse(req.body.coordinates);
+        } catch (e) {
+            console.error("Error parsing coordinates:", e);
+        }
+    }
 
     try {
         const newCustomer = new Customer({
@@ -69,6 +78,8 @@ router.post('/', cpUpload, async (req, res) => {
             customerName,
             phone,
             loanType,
+            address,
+            coordinates: parsedCoordinates,
             followUpDate: followUpDate || new Date().toISOString().split('T')[0]
         });
 
