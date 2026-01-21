@@ -458,7 +458,7 @@ const Home = () => {
                     >
                         <div className="section-header">
                             <h2>🚀 Action Required</h2>
-                            <button
+                            {/* <button
                                 onClick={() => window.location.reload()}
                                 style={{
                                     background: 'none',
@@ -470,7 +470,7 @@ const Home = () => {
                                 }}
                             >
                                 Refresh Data
-                            </button>
+                            </button> */}
                             <span className="count-badge">{actionNeeded.length} leads</span>
                         </div>
                         {actionNeeded.length > 0 ? (

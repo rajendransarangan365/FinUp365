@@ -87,6 +87,30 @@ const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) =>
                             <span>{statusBadge.text}</span>
                         </div>
                     )}
+
+                    {/* Last Call Status - New Addition */}
+                    {customer.callHistory && customer.callHistory.length > 0 && (() => {
+                        const lastCall = customer.callHistory[customer.callHistory.length - 1];
+                        const isPicked = lastCall.status === 'PICKED';
+                        const timeString = new Date(lastCall.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        return (
+                            <div className="last-call-badge" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                marginTop: '6px',
+                                fontSize: '0.75rem',
+                                color: isPicked ? '#00b894' : '#d63031',
+                                background: isPicked ? 'rgba(0, 184, 148, 0.1)' : 'rgba(214, 48, 49, 0.1)',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                width: 'fit-content'
+                            }}>
+                                {isPicked ? <FaPhoneAlt size={10} /> : <FaTimesCircle size={10} />}
+                                <span>{isPicked ? 'Answered' : lastCall.status} • {timeString}</span>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 <div className="crm-actions">

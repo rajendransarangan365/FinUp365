@@ -35,11 +35,15 @@ const ImageCropper = ({ imageSrc, aspect, onCropComplete, onClose }) => {
     }, [imageSrc, croppedAreaPixels, onCropComplete]);
 
     return (
-        <div className="cropper-overlay">
-            <div className="cropper-container">
+        <div className="cropper-overlay" onClick={onClose} style={{ cursor: 'pointer' }}>
+            <div className="cropper-container" onClick={(e) => e.stopPropagation()} style={{ cursor: 'default' }}>
                 <div className="cropper-header">
                     <h3>Crop Image</h3>
-                    <button onClick={onClose} className="close-btn"><FaTimes /></button>
+                    <button onClick={(e) => {
+                        console.log('Close clicked');
+                        e.stopPropagation();
+                        onClose();
+                    }} className="close-btn"><FaTimes /></button>
                 </div>
                 <div className="cropper-area">
                     <Cropper
