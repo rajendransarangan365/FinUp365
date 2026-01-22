@@ -75,7 +75,8 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
             const formData = new FormData();
             formData.append('name', name);
             formData.append('agencyName', agencyName);
-            if (file) formData.append('photo', file);
+            // IMPORTANT: Include filename for multer
+            if (file) formData.append('photo', file, 'user_profile.jpg');
 
             const { data } = await api.post('/auth/update-profile', formData, {
                 headers: {

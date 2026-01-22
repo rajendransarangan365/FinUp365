@@ -19,6 +19,38 @@ cloudinary.config({
 
 const upload = multer({ dest: '/tmp' });
 
+// Helper: Extract public_id from Cloudinary URL (Same logic as in customers.js)
+const extractPublicId = (url) => {
+    if (!url) return null;
+    try {
+        const parts = url.split('/');
+        const uploadIndex = parts.indexOf('upload');
+
+        if (uploadIndex !== -1) {
+            let currentIndex = uploadIndex + 1;
+
+            // Skip transformation segments and version
+            while (currentIndex < parts.length) {
+                const segment = parts[currentIndex];
+                const isVersion = segment.startsWith('v') && !isNaN(segment.substring(1));
+                const isTransformation = segment.includes(',') || segment.startsWith('w_') || segment.startsWith('h_') || segment.startsWith('c_');
+
+                if (isVersion || isTransformation) {
+                    currentIndex++;
+                } else {
+                    break;
+                }
+            }
+
+            const publicIdWithExt = parts.slice(currentIndex).join('/');
+            return publicIdWithExt.replace(/\.[^/.]+$/, '');
+        }
+    } catch (err) {
+        console.error("Failed to extract public_id from URL:", err);
+    }
+    return null;
+};
+
 // 1. Register User
 router.post('/register', async (req, res) => {
     let { email, password, name, agencyName } = req.body;
@@ -149,12 +181,30 @@ router.post('/update-profile', authMiddleware, upload.single('photo'), async (re
         if (agencyName) user.agencyName = agencyName;
 
         if (req.file) {
-            const result = await cloudinary.uploader.upload(req.file.path, {
+            let uploadOptions = {
                 folder: "finup365/profiles",
-                transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }]
-            });
+                transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }],
+                overwrite: true,
+                invalidate: true
+            };
+
+            // Check if user has an existing photo to overwrite
+            if (user.photoUrl) {
+                const publicId = extractPublicId(user.photoUrl);
+                if (publicId) {
+                    uploadOptions.public_id = publicId;
+                    delete uploadOptions.folder; // IMPORTANT: Remove folder to avoid duplication
+                    console.log('♻️ Overwriting existing user profile with public_id:', publicId);
+                }
+            }
+
+            const result = await cloudinary.uploader.upload(req.file.path, uploadOptions);
             user.photoUrl = result.secure_url;
-            fs.unlinkSync(req.file.path);
+
+            // Clean up local file
+            if (fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
         }
 
         await user.save();
