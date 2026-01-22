@@ -1,9 +1,41 @@
 .my-customers-page {
-    padding: 20px;
     background-color: #f8f9fa;
     min-height: 100vh;
     padding-bottom: 80px;
     /* Space for bottom nav if present on mobile */
+}
+
+/* Responsive Container */
+.my-customers-page>* {
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .my-customers-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .page-header,
+    .search-bar-container,
+    .customers-list {
+        width: 100%;
+        max-width: 680px;
+    }
+
+    .page-header {
+        padding: 20px 0;
+    }
+}
+
+@media (min-width: 1024px) {
+
+    .page-header,
+    .search-bar-container,
+    .customers-list {
+        max-width: 720px;
+    }
 }
 
 .page-header {
@@ -51,13 +83,16 @@
 }
 
 .search-icon {
+    position: absolute;
+    left: 14px;
     color: #888;
-    margin-right: 10px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .search-input-wrapper input {
     width: 100%;
-    padding: 12px 0;
+    padding: 12px 15px 12px 45px;
     border: none;
     outline: none;
     font-size: 1rem;

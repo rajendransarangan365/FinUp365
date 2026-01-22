@@ -31,7 +31,11 @@
 
 .filter-search-input {
     width: 100%;
-    padding: 12px 40px 12px 40px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    padding-right: 40px;
+    padding-left: 56px;
+    /* Increased to prevent icon overlap */
     border: 1px solid transparent;
     border-radius: var(--radius-full);
     font-size: 0.95rem;
