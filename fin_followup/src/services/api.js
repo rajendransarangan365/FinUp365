@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Use full URL to avoid proxy issues with local HTTPS/HTTP mismatch
-const API_URL = 'http://localhost:5000/api';
+// Use environment-aware URL - production on Vercel, local for development
+const API_URL = import.meta.env.PROD
+    ? '/api'  // Use relative path in production (same domain)
+    : 'http://localhost:5000/api';  // Local development
 
 const api = axios.create({
     baseURL: API_URL,

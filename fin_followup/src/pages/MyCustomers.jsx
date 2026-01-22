@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { FaEdit, FaTrash, FaArrowLeft, FaSearch } from 'react-icons/fa';
 import '../styles/MyCustomers.css';
 
@@ -23,7 +23,7 @@ const MyCustomers = () => {
             return;
         }
         try {
-            const response = await axios.get(`http://localhost:5000/api/customers/${userId}`);
+            const response = await api.get(`/customers/${userId}`);
             setCustomers(response.data);
             setLoading(false);
         } catch (error) {
@@ -35,7 +35,7 @@ const MyCustomers = () => {
     const handleDelete = async (id, name) => {
         if (window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
             try {
-                await axios.delete(`http://localhost:5000/api/customers/${id}`);
+                await api.delete(`/customers/${id}`);
                 setCustomers(customers.filter(c => c._id !== id));
             } catch (error) {
                 console.error("Error deleting customer:", error);
