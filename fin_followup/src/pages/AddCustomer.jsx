@@ -471,13 +471,14 @@ const AddCustomer = () => {
                             onClick={handleUploadPhoto}
                             disabled={uploadingPhoto}
                             style={{
-                                width: '100%',
+                                width: '90%',
                                 marginTop: '12px',
-                                padding: '14px',
-                                background: uploadingPhoto ? '#ccc' : 'linear-gradient(135deg, #39C0ED 0%, #2E86DE 100%)',
+                                padding: '12px',
+                                background: uploadingPhoto ? 'rgba(255,255,255,0.5)' : 'rgba(255, 255, 255, 0.2)',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(255, 255, 255, 0.4)',
                                 color: 'white',
-                                border: 'none',
-                                borderRadius: '16px',
+                                borderRadius: '12px',
                                 fontSize: '15px',
                                 fontWeight: '600',
                                 display: 'flex',
