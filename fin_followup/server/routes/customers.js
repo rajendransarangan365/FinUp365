@@ -281,6 +281,15 @@ router.delete('/:id', async (req, res) => {
         if (customer.profilePicUrl) await deleteFromCloudinary(customer.profilePicUrl);
         if (customer.audioUrl) await deleteFromCloudinary(customer.audioUrl, 'video'); // Audio uses video resource type usually
 
+        // Also delete audio notes from history
+        if (customer.history && customer.history.length > 0) {
+            for (const item of customer.history) {
+                if (item.audioUrl) {
+                    await deleteFromCloudinary(item.audioUrl, 'video');
+                }
+            }
+        }
+
         await Customer.findByIdAndDelete(req.params.id);
         res.json({ message: "Customer deleted successfully" });
     } catch (err) {
