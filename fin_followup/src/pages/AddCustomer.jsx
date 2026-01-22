@@ -36,6 +36,8 @@ const AddCustomer = () => {
     const [showLocationPicker, setShowLocationPicker] = useState(false);
 
     const [uploading, setUploading] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [uploadingProfile, setUploadingProfile] = useState(false);
 
     // Fetch data if editing
     React.useEffect(() => {
@@ -162,6 +164,79 @@ const AddCustomer = () => {
         }
     };
 
+    // Separate Upload Handlers
+    const handleUploadPhoto = async () => {
+        if (!photo || !id) {
+            alert("Please select a business card image first");
+            return;
+        }
+
+        setUploadingPhoto(true);
+        try {
+            const formData = new FormData();
+            // IMPORTANT: Include filename for multer to recognize it as a file
+            formData.append('photo', photo, 'business_card.jpg');
+
+            console.log('☁️ Uploading business card to Cloudinary...');
+            const response = await api.post(`/customers/${id}/upload-photo`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            // Update preview with Cloudinary URL
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+            setPreviewUrl(response.data.photoUrl);
+            setPhoto(null); // Clear blob since it's now uploaded
+
+            console.log('✅ Business card uploaded:', response.data.photoUrl);
+            alert("Business card uploaded to cloud! ✅");
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Upload failed: " + (error.response?.data?.error || error.message));
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
+
+    const handleUploadProfile = async () => {
+        if (!profilePic || !id) {
+            alert("Please select a profile picture first");
+            return;
+        }
+
+        setUploadingProfile(true);
+        try {
+            const formData = new FormData();
+            // IMPORTANT: Include filename for multer to recognize it as a file
+            formData.append('profilePic', profilePic, 'profile_picture.jpg');
+
+            console.log('☁️ Uploading profile picture to Cloudinary...');
+            const response = await api.post(`/customers/${id}/upload-profile`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            // Update preview with Cloudinary URL
+            if (profilePreview && profilePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(profilePreview);
+            }
+            setProfilePreview(response.data.profilePicUrl);
+            setProfilePic(null); // Clear blob since it's now uploaded
+
+            console.log('✅ Profile picture uploaded:', response.data.profilePicUrl);
+            alert("Profile picture uploaded to cloud! ✅");
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Upload failed: " + (error.response?.data?.error || error.message));
+        } finally {
+            setUploadingProfile(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -171,6 +246,9 @@ const AddCustomer = () => {
         }
 
         setUploading(true);
+        // Set individual upload states if images are being uploaded
+        if (photo) setUploadingPhoto(true);
+        if (profilePic) setUploadingProfile(true);
 
         try {
             const formData = new FormData();
@@ -195,16 +273,37 @@ const AddCustomer = () => {
             console.log('- Preview URL:', previewUrl);
             console.log('- Profile Preview URL:', profilePreview);
 
+            let response;
             if (id) {
                 // Update
                 console.log('Updating customer with ID:', id);
                 console.log('Request URL:', `/customers/${id}`);
-                await api.put(`/customers/${id}`, formData);
+                response = await api.put(`/customers/${id}`, formData);
+
+                // Update previews with new URLs from response
+                if (response.data.photoUrl && photo) {
+                    // Revoke old blob URL
+                    if (previewUrl && previewUrl.startsWith('blob:')) {
+                        URL.revokeObjectURL(previewUrl);
+                    }
+                    setPreviewUrl(response.data.photoUrl);
+                    setPhoto(null); // Clear blob since it's now uploaded
+                }
+
+                if (response.data.profilePicUrl && profilePic) {
+                    // Revoke old blob URL
+                    if (profilePreview && profilePreview.startsWith('blob:')) {
+                        URL.revokeObjectURL(profilePreview);
+                    }
+                    setProfilePreview(response.data.profilePicUrl);
+                    setProfilePic(null); // Clear blob since it's now uploaded
+                }
+
                 alert("Customer Updated Successfully!");
                 navigate('/my-customers');
             } else {
                 // Create
-                await api.post('/customers', formData);
+                response = await api.post('/customers', formData);
                 alert("Customer Saved Successfully!");
                 navigate('/');
             }
@@ -213,6 +312,8 @@ const AddCustomer = () => {
             alert("Error saving: " + (error.response?.data?.error || error.message));
         } finally {
             setUploading(false);
+            setUploadingPhoto(false);
+            setUploadingProfile(false);
         }
     };
 
@@ -249,6 +350,35 @@ const AddCustomer = () => {
                                     fontWeight: '600'
                                 }}>
                                     Processing...
+                                </div>
+                            )}
+                            {uploadingPhoto && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    background: 'rgba(67, 24, 255, 0.85)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    gap: '12px',
+                                    zIndex: 10
+                                }}>
+                                    <div className="spinner" style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        border: '3px solid rgba(255,255,255,0.3)',
+                                        borderTop: '3px solid white',
+                                        borderRadius: '50%',
+                                        animation: 'spin 0.8s linear infinite'
+                                    }}></div>
+                                    <div>Uploading to cloud...</div>
                                 </div>
                             )}
                         </div>
@@ -333,6 +463,49 @@ const AddCustomer = () => {
                         style={{ display: 'none' }}
                         accept="image/*"
                     />
+
+                    {/* Upload Button - Only show if new image selected and editing */}
+                    {id && photo && (
+                        <button
+                            type="button"
+                            onClick={handleUploadPhoto}
+                            disabled={uploadingPhoto}
+                            style={{
+                                width: '100%',
+                                marginTop: '12px',
+                                padding: '14px',
+                                background: uploadingPhoto ? '#ccc' : 'linear-gradient(135deg, #39C0ED 0%, #2E86DE 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '16px',
+                                fontSize: '15px',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                                boxShadow: uploadingPhoto ? 'none' : '0 4px 15px rgba(46, 134, 222, 0.3)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {uploadingPhoto ? (
+                                <>
+                                    <div className="spinner" style={{
+                                        width: '16px',
+                                        height: '16px',
+                                        border: '2px solid rgba(255,255,255,0.3)',
+                                        borderTop: '2px solid white',
+                                        borderRadius: '50%',
+                                        animation: 'spin 0.8s linear infinite'
+                                    }}></div>
+                                    Uploading to Cloud...
+                                </>
+                            ) : (
+                                <>☁️ Upload Business Card to Cloud</>
+                            )}
+                        </button>
+                    )}
                 </div>
 
                 {/* 2. Profile & Details */}
@@ -374,6 +547,36 @@ const AddCustomer = () => {
                                         borderRadius: '50%'
                                     }}>
                                         Processing...
+                                    </div>
+                                )}
+                                {uploadingProfile && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        background: 'rgba(67, 24, 255, 0.85)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        gap: '8px',
+                                        borderRadius: '50%',
+                                        zIndex: 10
+                                    }}>
+                                        <div className="spinner" style={{
+                                            width: '24px',
+                                            height: '24px',
+                                            border: '2px solid rgba(255,255,255,0.3)',
+                                            borderTop: '2px solid white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 0.8s linear infinite'
+                                        }}></div>
+                                        <div>Uploading...</div>
                                     </div>
                                 )}
                             </div>
@@ -441,6 +644,49 @@ const AddCustomer = () => {
                             accept="image/*"
                         />
                     </div>
+
+                    {/* Upload Button - Only show if new profile pic selected and editing */}
+                    {id && profilePic && (
+                        <button
+                            type="button"
+                            onClick={handleUploadProfile}
+                            disabled={uploadingProfile}
+                            style={{
+                                width: '100%',
+                                marginBottom: '20px',
+                                padding: '12px',
+                                background: uploadingProfile ? '#ccc' : 'linear-gradient(135deg, #39C0ED 0%, #2E86DE 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '16px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                cursor: uploadingProfile ? 'not-allowed' : 'pointer',
+                                boxShadow: uploadingProfile ? 'none' : '0 4px 15px rgba(46, 134, 222, 0.3)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {uploadingProfile ? (
+                                <>
+                                    <div className="spinner" style={{
+                                        width: '16px',
+                                        height: '16px',
+                                        border: '2px solid rgba(255,255,255,0.3)',
+                                        borderTop: '2px solid white',
+                                        borderRadius: '50%',
+                                        animation: 'spin 0.8s linear infinite'
+                                    }}></div>
+                                    Uploading to Cloud...
+                                </>
+                            ) : (
+                                <>☁️ Upload Profile Picture to Cloud</>
+                            )}
+                        </button>
+                    )}
 
                     <div className="input-group">
                         <label>Business / Lead Name</label>

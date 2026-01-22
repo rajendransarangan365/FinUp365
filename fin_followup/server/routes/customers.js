@@ -210,19 +210,56 @@ router.post('/:id/call-log', async (req, res) => {
     }
 });
 
+// Helper: Extract public_id from Cloudinary URL
+const extractPublicId = (url) => {
+    if (!url) return null;
+    try {
+        // Cloudinary URL format: .../upload/[transformations]/[version]/[folder]/[id].[ext]
+        // Examples:
+        // No version/trans: .../upload/folder/pic.jpg
+        // With version: .../upload/v12345/folder/pic.jpg
+        // With trans: .../upload/w_200,h_200/folder/pic.jpg
+        // With both: .../upload/w_200,h_200/v12345/folder/pic.jpg
+
+        const parts = url.split('/');
+        const uploadIndex = parts.indexOf('upload');
+
+        if (uploadIndex !== -1) {
+            // Start looking from segment after 'upload'
+            let currentIndex = uploadIndex + 1;
+
+            // Skip transformation segments (usually contain ',' or start with trans params like w_, h_, c_, etc)
+            // Also skip version segments (v12345)
+            while (currentIndex < parts.length) {
+                const segment = parts[currentIndex];
+                const isVersion = segment.startsWith('v') && !isNaN(segment.substring(1));
+                const isTransformation = segment.includes(',') || segment.startsWith('w_') || segment.startsWith('h_') || segment.startsWith('c_');
+
+                if (isVersion || isTransformation) {
+                    currentIndex++;
+                } else {
+                    // Found the start of public_id
+                    break;
+                }
+            }
+
+            // Join the rest as public_id (handling folders)
+            const publicIdWithExt = parts.slice(currentIndex).join('/');
+            // Remove file extension
+            return publicIdWithExt.replace(/\.[^/.]+$/, '');
+        }
+    } catch (err) {
+        console.error("Failed to extract public_id from URL:", err);
+    }
+    return null;
+};
+
 // Helper: Delete from Cloudinary
 const deleteFromCloudinary = async (url, resourceType = 'image') => {
     if (!url) return;
     try {
-        // Extract public ID from URL
-        // Example: https://res.cloudinary.com/demo/image/upload/v1234567890/folder/filename.jpg
-        // Public ID: folder/filename
-        const parts = url.split('/');
-        const versionIndex = parts.findIndex(part => part.startsWith('v') && !isNaN(part.substring(1)));
-        // If version found, take everything after it
-        if (versionIndex !== -1) {
-            const publicIdWithExt = parts.slice(versionIndex + 1).join('/');
-            const publicId = publicIdWithExt.split('.')[0]; // Remove extension
+        const publicId = extractPublicId(url);
+        if (publicId) {
             await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
             console.log(`🗑️ Deleted old ${resourceType}: ${publicId}`);
         }
@@ -282,49 +319,83 @@ router.put('/:id', cpUpload, async (req, res) => {
         if (followUpDate) updateData.followUpDate = followUpDate;
         if (parsedCoordinates) updateData.coordinates = parsedCoordinates;
 
-        // Handle file uploads & cleanup old files
+        // Handle file uploads with cache invalidation
         // 1. Upload Business Photo
         if (req.files && req.files['photo']) {
             console.log('📸 New business card photo detected');
-            // Delete old
-            if (currentCustomer.photoUrl) {
-                console.log('🗑️ Deleting old business card:', currentCustomer.photoUrl);
-                await deleteFromCloudinary(currentCustomer.photoUrl);
-            }
 
             const photoFile = req.files['photo'][0];
+            let uploadOptions = {
+                folder: "fin_followup_photos",
+                invalidate: true, // Clear CDN cache for immediate update
+                overwrite: true
+            };
+
+            // If updating existing image, use same public_id to maintain URL
+            if (currentCustomer.photoUrl) {
+                const publicId = extractPublicId(currentCustomer.photoUrl);
+                if (publicId) {
+                    uploadOptions.public_id = publicId;
+                    console.log('♻️ Overwriting existing business card with public_id:', publicId);
+                }
+            }
+
             console.log('☁️ Uploading new business card to Cloudinary...');
-            const result = await streamUpload(photoFile.buffer, {
-                folder: "fin_followup_photos"
-            });
+            const result = await streamUpload(photoFile.buffer, uploadOptions);
             updateData.photoUrl = result.secure_url;
             console.log('✅ New business card URL:', result.secure_url);
         }
 
         // 2. Upload Profile Pic
         if (req.files && req.files['profilePic']) {
-            // Delete old
-            if (currentCustomer.profilePicUrl) await deleteFromCloudinary(currentCustomer.profilePicUrl);
+            console.log('📸 New profile picture detected');
 
             const profileFile = req.files['profilePic'][0];
-            const result = await streamUpload(profileFile.buffer, {
+            let uploadOptions = {
                 folder: "fin_followup_profiles",
-                transformation: [{ width: 200, height: 200, crop: "fill", gravity: "face" }]
-            });
+                transformation: [{ width: 200, height: 200, crop: "fill", gravity: "face" }],
+                invalidate: true, // Clear CDN cache for immediate update
+                overwrite: true
+            };
+
+            // If updating existing image, use same public_id to maintain URL
+            if (currentCustomer.profilePicUrl) {
+                const publicId = extractPublicId(currentCustomer.profilePicUrl);
+                if (publicId) {
+                    uploadOptions.public_id = publicId;
+                    console.log('♻️ Overwriting existing profile pic with public_id:', publicId);
+                }
+            }
+
+            const result = await streamUpload(profileFile.buffer, uploadOptions);
             updateData.profilePicUrl = result.secure_url;
+            console.log('✅ New profile pic URL:', result.secure_url);
         }
 
         // 3. Upload Audio
         if (req.files && req.files['audio']) {
-            // Delete old (Note: needs resource_type video usually for audio)
-            if (currentCustomer.audioUrl) await deleteFromCloudinary(currentCustomer.audioUrl);
+            console.log('🎤 New audio detected');
 
             const audioFile = req.files['audio'][0];
-            const result = await streamUpload(audioFile.buffer, {
+            let uploadOptions = {
                 resource_type: "video",
-                folder: "fin_followup_audio"
-            });
+                folder: "fin_followup_audio",
+                invalidate: true, // Clear CDN cache for immediate update
+                overwrite: true
+            };
+
+            // If updating existing audio, use same public_id to maintain URL
+            if (currentCustomer.audioUrl) {
+                const publicId = extractPublicId(currentCustomer.audioUrl);
+                if (publicId) {
+                    uploadOptions.public_id = publicId;
+                    console.log('♻️ Overwriting existing audio with public_id:', publicId);
+                }
+            }
+
+            const result = await streamUpload(audioFile.buffer, uploadOptions);
             updateData.audioUrl = result.secure_url;
+            console.log('✅ New audio URL:', result.secure_url);
         }
 
         const updatedCustomer = await Customer.findByIdAndUpdate(
@@ -339,6 +410,105 @@ router.put('/:id', cpUpload, async (req, res) => {
     } catch (err) {
         console.error("Error updating customer:", err);
         res.status(500).json({ error: "Failed to update customer" });
+    }
+});
+
+// 7. Upload Business Card Photo Only (Separate Upload)
+router.post('/:id/upload-photo', upload.single('photo'), async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ error: "Customer not found" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: "No photo file provided" });
+        }
+
+        console.log('📸 Uploading business card for customer:', req.params.id);
+
+        // Prepare upload options
+        let uploadOptions = {
+            folder: "fin_followup_photos",
+            invalidate: true,
+            overwrite: true
+        };
+
+        // If customer has existing photo, use same public_id to overwrite
+        if (customer.photoUrl) {
+            const publicId = extractPublicId(customer.photoUrl);
+            if (publicId) {
+                uploadOptions.public_id = publicId;
+                delete uploadOptions.folder; // IMPORTANT: Remove folder if public_id is set to avoid duplication
+                console.log('♻️ Overwriting existing business card with public_id:', publicId);
+            }
+        }
+
+        // Upload to Cloudinary
+        const result = await streamUpload(req.file.buffer, uploadOptions);
+        console.log('✅ Business card uploaded to Cloudinary:', result.secure_url);
+
+        // Update customer record with new URL
+        customer.photoUrl = result.secure_url;
+        await customer.save();
+
+        res.json({
+            photoUrl: result.secure_url,
+            message: "Business card uploaded successfully"
+        });
+    } catch (err) {
+        console.error("Error uploading business card:", err);
+        res.status(500).json({ error: "Failed to upload business card" });
+    }
+});
+
+// 8. Upload Profile Picture Only (Separate Upload)
+router.post('/:id/upload-profile', upload.single('profilePic'), async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ error: "Customer not found" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: "No profile picture file provided" });
+        }
+
+        console.log('📸 Uploading profile picture for customer:', req.params.id);
+
+        // Prepare upload options
+        let uploadOptions = {
+            folder: "fin_followup_profiles",
+            transformation: [{ width: 200, height: 200, crop: "fill", gravity: "face" }],
+            invalidate: true,
+            overwrite: true
+        };
+
+        // If customer has existing profile pic, use same public_id to overwrite
+        if (customer.profilePicUrl) {
+            const publicId = extractPublicId(customer.profilePicUrl);
+            if (publicId) {
+                uploadOptions.public_id = publicId;
+                delete uploadOptions.folder; // IMPORTANT: Remove folder if public_id is set to avoid duplication
+                console.log('♻️ Overwriting existing profile pic with public_id:', publicId);
+            }
+        }
+
+        // Upload to Cloudinary
+        const result = await streamUpload(req.file.buffer, uploadOptions);
+        console.log('✅ Profile picture uploaded to Cloudinary:', result.secure_url);
+
+        // Update customer record with new URL
+        customer.profilePicUrl = result.secure_url;
+        await customer.save();
+
+        res.json({
+            profilePicUrl: result.secure_url,
+            message: "Profile picture uploaded successfully"
+        });
+    } catch (err) {
+        console.error("Error uploading profile picture:", err);
+        res.status(500).json({ error: "Failed to upload profile picture" });
     }
 });
 
