@@ -7,6 +7,10 @@ const UserSchema = new mongoose.Schema({
     agencyName: { type: String },
     photoUrl: { type: String },
     reminderHoursBefore: { type: Number, default: 2 }, // Hours before meeting to send reminder
+    securityQuestion: { type: String }, // For password recovery
+    securityAnswer: { type: String },
+    resetPasswordExpires: { type: Date },
+    activeWorkflowId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workflow', default: null }, // Link to active custom workflow
     createdAt: { type: Date, default: Date.now }
 });
 

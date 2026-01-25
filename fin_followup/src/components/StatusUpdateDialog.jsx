@@ -4,8 +4,8 @@ import { FaMicrophone, FaTrash, FaCheckCircle } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
 import AudioPlayer from './AudioPlayer';
 
-const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
-    const [outcome, setOutcome] = useState('RESCHEDULE'); // RESCHEDULE | CONVERTED | NOT_INTERESTED
+const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => {
+    const [outcome, setOutcome] = useState(activeWorkflow ? activeWorkflow.steps[0] : 'RESCHEDULE'); // Default to first step or standard default
     const [date, setDate] = useState('');
     const [time, setTime] = useState('09:00'); // Default to 9 AM
     const [note, setNote] = useState('');
@@ -136,28 +136,51 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                         )}
                     </div>
 
-                    <div className="outcome-chips">
-                        <button
-                            className={`chip ${outcome === 'RESCHEDULE' ? 'active' : ''}`}
-                            onClick={() => setOutcome('RESCHEDULE')}
-                        >
-                            📅 Follow Up
-                        </button>
-                        <button
-                            className={`chip ${outcome === 'CONVERTED' ? 'active success' : ''}`}
-                            onClick={() => setOutcome('CONVERTED')}
-                        >
-                            🎉 Deal Closed
-                        </button>
-                        <button
-                            className={`chip ${outcome === 'NOT_INTERESTED' ? 'active danger' : ''}`}
-                            onClick={() => setOutcome('NOT_INTERESTED')}
-                        >
-                            ❌ Not Interested
-                        </button>
-                    </div>
+                    {activeWorkflow ? (
+                        /* WORKFLOW STEPS */
+                        <div className="outcome-chips" style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                            {activeWorkflow.steps.map((step) => (
+                                <button
+                                    key={step}
+                                    className={`chip ${outcome === step ? 'active' : ''}`}
+                                    onClick={() => setOutcome(step)}
+                                    style={{
+                                        background: outcome === step ? 'var(--color-primary)' : '#f1f2f6',
+                                        color: outcome === step ? 'white' : '#2d3436',
+                                        border: 'none'
+                                    }}
+                                >
+                                    {step}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        /* STANDARD CHIPS */
+                        <div className="outcome-chips">
+                            <button
+                                className={`chip ${outcome === 'RESCHEDULE' ? 'active' : ''}`}
+                                onClick={() => setOutcome('RESCHEDULE')}
+                            >
+                                📅 Follow Up
+                            </button>
+                            <button
+                                className={`chip ${outcome === 'CONVERTED' ? 'active success' : ''}`}
+                                onClick={() => setOutcome('CONVERTED')}
+                            >
+                                🎉 Deal Closed
+                            </button>
+                            <button
+                                className={`chip ${outcome === 'NOT_INTERESTED' ? 'active danger' : ''}`}
+                                onClick={() => setOutcome('NOT_INTERESTED')}
+                            >
+                                ❌ Not Interested
+                            </button>
+                        </div>
+                    )}
 
-                    {outcome === 'RESCHEDULE' && (
+                    {/* Standard Logic: Show Date Picker if RESCHEDULE or if using Workflow (assuming all workflow steps might need a next follow up date OR we allow it generically) */}
+                    {/* For Workflow, we allow date picker always, or we could make it configurable. For now, let's allow it so they can schedule the "Next Step" meeting. */}
+                    {(outcome === 'RESCHEDULE' || activeWorkflow) && (
                         <div className="date-picker-section">
                             <label>Next Follow Up</label>
                             <div className="preset-dates">

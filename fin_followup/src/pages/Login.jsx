@@ -81,6 +81,16 @@ const Login = () => {
                         </div>
                     </div>
 
+                    <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                        <span
+                            style={{ fontSize: '13px', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: '500' }}
+                            onClick={() => navigate('/forgot-password')}
+                        >
+                            Forgot Password?
+                        </span>
+                    </div>
+
+
                     <button
                         className="btn-primary full-width"
                         onClick={handleLogin}

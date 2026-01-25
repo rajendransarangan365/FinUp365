@@ -39,7 +39,7 @@
 }
 
 .brand-logo {
-    height: 50px;
+    height: 65px;
     /* Increased size for better visibility */
     width: auto;
     object-fit: contain;
@@ -48,7 +48,7 @@
 
 .crm-subtitle {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     /* Larger text */
     margin-top: 2px;
     font-weight: 600;

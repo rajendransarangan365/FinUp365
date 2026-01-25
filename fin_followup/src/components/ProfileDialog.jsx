@@ -24,6 +24,10 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const [isVerified, setIsVerified] = useState(false);
     const [snackbar, setSnackbar] = useState({ show: false, message: '', type: '' });
 
+    // Security Question State
+    const [secQuestion, setSecQuestion] = useState(user.securityQuestion || '');
+    const [secAnswer, setSecAnswer] = useState('');
+
     const showSnackbar = (message, type = 'error') => {
         setSnackbar({ show: true, message, type });
         setTimeout(() => setSnackbar({ show: false, message: '', type: '' }), 3000);
@@ -125,9 +129,46 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
         }
     };
 
+    const handleUpdateSecurityQuestion = async (e) => {
+        e.preventDefault();
+        if (!secQuestion || !secAnswer) {
+            alert("Please provide both a question and an answer.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { data } = await api.put('/auth/security-question', {
+                question: secQuestion,
+                answer: secAnswer
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            // Update local user
+            localStorage.setItem('user', JSON.stringify(data.user));
+            if (onUpdateUser) onUpdateUser(data.user);
+
+            alert("Security question updated successfully!");
+            setSecAnswer(''); // Clear answer for security
+        } catch (error) {
+            console.error(error);
+            alert("Failed to update security question.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="dialog-overlay">
-            <div className="dialog-card" style={{ maxWidth: '400px', padding: 0, overflow: 'hidden' }}>
+            <div className="dialog-card" style={{
+                maxWidth: '400px',
+                padding: 0,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                maxHeight: '90vh'
+            }}>
 
                 {/* Header with Gradient */}
                 <div style={{
@@ -245,7 +286,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                     </button>
                 </div>
 
-                <div style={{ padding: '24px' }}>
+                <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
                     {activeTab === 'details' && (
 
                         <form onSubmit={handleUpdateProfile}>
@@ -351,6 +392,49 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                     </button>
                                 </form>
                             )}
+
+                            {/* Separator */}
+                            <div style={{ height: '1px', background: '#eee', margin: '24px 0' }}></div>
+
+                            {/* Security Question Section */}
+                            <form onSubmit={handleUpdateSecurityQuestion}>
+                                <h4 style={{ margin: '0 0 16px', fontSize: '14px', color: '#2d3436' }}>Password Recovery</h4>
+                                <p style={{ fontSize: '11px', color: '#636e72', marginBottom: '16px' }}>
+                                    Set a security question to recover your password if you forget it.
+                                </p>
+
+                                <div className="form-group" style={{ marginBottom: '16px' }}>
+                                    <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Security Question</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                        <FiLock color="#aaa" />
+                                        <input
+                                            type="text"
+                                            value={secQuestion}
+                                            onChange={e => setSecQuestion(e.target.value)}
+                                            placeholder="e.g. What is your mother's maiden name?"
+                                            style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group" style={{ marginBottom: '16px' }}>
+                                    <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Answer</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
+                                        <FiCheck color="#aaa" />
+                                        <input
+                                            type="text" // Visible for user to see what they type, or password? usually text for answer is fine or toggle. Let's keep text for simplicity as they set it.
+                                            value={secAnswer}
+                                            onChange={e => setSecAnswer(e.target.value)}
+                                            placeholder="Your answer"
+                                            style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', background: '#6c5ce7' }}>
+                                    {loading ? 'Saving...' : 'Update Security Question'}
+                                </button>
+                            </form>
 
                             {/* Snackbar */}
                             {snackbar.show && (

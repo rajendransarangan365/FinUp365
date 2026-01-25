@@ -2,82 +2,58 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
-import customerRoutes from './routes/customers.js';
-
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Routes
+import authRoutes from './routes/auth.js';
+import customerRoutes from './routes/customers.js';
+import workflowRoutes from './routes/workflow.js';
 
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware - CORS configuration for both local and production
-const allowedOrigins = [
-    'http://localhost:5173',
-    'https://localhost:5173',
-    'http://localhost:5174', // Alternative port
-    'http://localhost:3000', // Alternative port
-    process.env.FRONTEND_URL // Your Vercel frontend URL
-].filter(Boolean); // Remove undefined values
-
-app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        // In development, allow all localhost origins
-        if (process.env.NODE_ENV !== 'production' && origin && origin.includes('localhost')) {
-            return callback(null, true);
-        }
-
-        // Check if origin is in allowedOrigins or is a vercel.app domain
-        if (allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
-            callback(null, true);
-        } else {
-            console.warn(`CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Middleware
+app.use(cors()); // Allow all origins for simplicity in dev, or configure as needed
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Support URL-encoded bodies
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/customers', customerRoutes);
 
 // Database Connection
-console.log("Attempting to connect to MongoDB...");
-mongoose.connect(process.env.MONGO_URI).then(() => console.log('MongoDB Connected Successfully'))
-    .catch(err => {
-        console.error('MongoDB Connection Failed:');
-        console.error(err);
-    });
+mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI)
+    .then(() => {
+        console.log('✅ MongoDB Connected');
+        console.log('✅ Workflow Routes Registered');
+    })
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// Routes (Placeholder)
+// Routes
+app.use('/auth', authRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/workflows', workflowRoutes);
+
+// Static files (Code for serving frontend in production or uploads)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve uploads folder if needed
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Basic Root Route
 app.get('/', (req, res) => {
-    res.send('FinUp365 Backend is Running');
+    res.send('API is running...');
 });
 
-// Global Error Handler
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', version: 'workflow-enabled' });
+});
+
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error("Global Server Error:", err);
-    res.status(500).json({ error: err.message || "Internal Server Error" });
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start Server (Only if running locally)
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
-
-export default app;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar, FaCog } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar, FaCog, FaTasks } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 import logo from '../assets/logo.png';
@@ -39,6 +39,35 @@ const Home = () => {
     // Settings and notification
     const [showSettings, setShowSettings] = useState(false);
     const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+    const [activeWorkflow, setActiveWorkflow] = useState(null);
+
+    // Fetch Active Workflow if exists
+    useEffect(() => {
+        const fetchWorkflow = async () => {
+            if (currentUser?.activeWorkflowId) {
+                try {
+                    // We need a way to get specific or just filter
+                    // Actually, we can just fetch all and find the active one, or add an endpoint.
+                    // For now, let's just fetch the specific one by ID if we had an endpoint, or user the workflows list
+
+                    // Let's use the list endpoint and find it
+                    const res = await api.get(`/workflows/${currentUser._id || currentUser.id}`);
+
+                    const active = res.data.find(w => w._id == currentUser.activeWorkflowId);
+
+                    if (active) {
+                        setActiveWorkflow(active);
+                        setActiveTab(active.steps[0]); // Default to first step
+                    }
+                } catch (e) {
+                    console.error("Failed to load workflow", e);
+                }
+            } else {
+                setActiveWorkflow(null);
+            }
+        };
+        fetchWorkflow();
+    }, [currentUser]);
 
     const handleLogout = () => {
         // ... logout logic ...
@@ -360,6 +389,11 @@ const Home = () => {
         ['CONVERTED', 'NOT_INTERESTED', 'DONE'].includes(c.status)
     );
 
+    // --- Dynamic Workflow Filtering ---
+    const getWorkflowCustomers = (stepName) => {
+        return filteredCustomers.filter(c => (c.status || '').toLowerCase() === stepName.toLowerCase());
+    };
+
     // console.log('--- Debug Filtering ---');
     // ... (removed)
 
@@ -462,33 +496,53 @@ const Home = () => {
 
             {/* Tabs Navigation */}
             <div className="tabs-nav">
-                <button
-                    className={`tab-btn ${activeTab === 'new' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('new')}
-                >
-                    New
-                    {newLeads.length > 0 && <span className="count-badge new-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle' }}>{newLeads.length}</span>}
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'reminder' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('reminder')}
-                >
-                    Reminder
-                    {actionNeeded.length > 0 && <span className="count-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle' }}>{actionNeeded.length}</span>}
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('upcoming')}
-                >
-                    Upcoming
-                    {upcoming.length > 0 && <span style={{ opacity: 0.6, fontSize: '0.8em', marginLeft: '6px' }}>({upcoming.length})</span>}
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'closed' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('closed')}
-                >
-                    Closed
-                </button>
+                {activeWorkflow ? (
+                    // WORKFLOW TABS
+                    activeWorkflow.steps.map(step => {
+                        const count = getWorkflowCustomers(step).length;
+                        return (
+                            <button
+                                key={step}
+                                className={`tab-btn ${activeTab === step ? 'active' : ''}`}
+                                onClick={() => setActiveTab(step)}
+                            >
+                                {step}
+                                {count > 0 && <span className="count-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle', background: activeTab === step ? 'white' : '#eee', color: activeTab === step ? 'black' : '#666' }}>{count}</span>}
+                            </button>
+                        );
+                    })
+                ) : (
+                    // STANDARD TABS
+                    <>
+                        <button
+                            className={`tab-btn ${activeTab === 'new' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('new')}
+                        >
+                            New
+                            {newLeads.length > 0 && <span className="count-badge new-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle' }}>{newLeads.length}</span>}
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'reminder' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('reminder')}
+                        >
+                            Reminder
+                            {actionNeeded.length > 0 && <span className="count-badge" style={{ marginLeft: '6px', fontSize: '0.7em', verticalAlign: 'middle' }}>{actionNeeded.length}</span>}
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('upcoming')}
+                        >
+                            Upcoming
+                            {upcoming.length > 0 && <span style={{ opacity: 0.6, fontSize: '0.8em', marginLeft: '6px' }}>({upcoming.length})</span>}
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'closed' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('closed')}
+                        >
+                            Closed
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Filter Bar */}
@@ -502,118 +556,135 @@ const Home = () => {
             <div className="crm-content">
                 {/* Content Sections - Simplified for Visibility */}
 
-                {/* --- NEW TAB --- */}
-                {activeTab === 'new' && (
+                {/* --- DYNAMIC WORKFLOW CONTENT --- */}
+                {activeWorkflow ? (
                     <motion.section
+                        key={activeTab} // Re-mount animation on tab change
                         className="crm-section"
                         initial="hidden" animate="visible" variants={containerVariants}
                     >
                         <div className="section-header">
-                            <h2>✨ New Arrivals</h2>
-                            <span className="count-badge new-badge">{newLeads.length} new</span>
+                            <h2>{activeTab}</h2>
+                            <span className="count-badge">{getWorkflowCustomers(activeTab).length}</span>
                         </div>
-                        {newLeads.length > 0 ? (
+
+                        {getWorkflowCustomers(activeTab).length > 0 ? (
                             <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                                {newLeads.map(c => (
+                                {getWorkflowCustomers(activeTab).map(c => (
                                     <div key={c.id} className="crm-item-wrapper">
-                                        <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="new" />
+                                        {/* Pass context to card so it knows it's a workflow item? Or just generic */}
+                                        <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="normal" />
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="empty-state">No new leads at the moment.</p>
+                            <p className="empty-state">No customers in {activeTab}.</p>
                         )}
                     </motion.section>
-                )}
-
-                {/* --- REMINDER TAB --- */}
-                {activeTab === 'reminder' && (
-                    <motion.section
-                        className="crm-section"
-                        initial="hidden" animate="visible" variants={containerVariants}
-                    >
-                        <div className="section-header">
-                            <h2>🚀 Action Required</h2>
-                            {/* <button
-                                onClick={() => window.location.reload()}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--color-primary)',
-                                    cursor: 'pointer',
-                                    fontSize: '0.8rem',
-                                    textDecoration: 'underline'
-                                }}
+                ) : (
+                    // STANDARD CONTENT
+                    <>
+                        {/* --- NEW TAB --- */}
+                        {activeTab === 'new' && (
+                            <motion.section
+                                className="crm-section"
+                                initial="hidden" animate="visible" variants={containerVariants}
                             >
-                                Refresh Data
-                            </button> */}
-                            <span className="count-badge">{actionNeeded.length} leads</span>
-                        </div>
-                        {actionNeeded.length > 0 ? (
-                            <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                                {actionNeeded.map(customer => (
-                                    <div key={customer.id} className="crm-item-wrapper">
-                                        <CustomerCard
-                                            customer={customer}
-                                            onCall={handleCall}
-                                            onCallAction={handleCallAction}
-                                            variant="urgent"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="empty-state">All caught up! Great job.</p>
-                        )}
-                    </motion.section>
-                )}
-
-                {/* --- UPCOMING TAB --- */}
-                {activeTab === 'upcoming' && (
-                    <motion.section
-                        className="crm-section"
-                        initial="hidden" animate="visible" variants={containerVariants}
-                    >
-                        <div className="section-header">
-                            <h2>📅 Upcoming</h2>
-                        </div>
-                        <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                            {upcoming.map(c => (
-                                <div key={c.id} className="crm-item-wrapper">
-                                    <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="normal" />
+                                <div className="section-header">
+                                    <h2>✨ New Arrivals</h2>
+                                    <span className="count-badge new-badge">{newLeads.length} new</span>
                                 </div>
-                            ))}
-                            {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
-                        </div>
-                    </motion.section>
-                )}
-
-                {/* --- CLOSED TAB --- */}
-                {activeTab === 'closed' && (
-                    <motion.section
-                        className="crm-section"
-                        initial="hidden" animate="visible" variants={containerVariants}
-                    >
-                        <div className="section-header">
-                            <h2>✅ Closed / Done <span className="count-badge">{completed.length}</span></h2>
-                        </div>
-                        {completed.length > 0 ? (
-                            <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                                {completed.map(customer => (
-                                    <div key={customer.id} className="crm-item-wrapper">
-                                        <CustomerCard
-                                            customer={customer}
-                                            onCall={handleCall}
-                                            onCallAction={handleCallAction}
-                                            variant="completed"
-                                        />
+                                {newLeads.length > 0 ? (
+                                    <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                        {newLeads.map(c => (
+                                            <div key={c.id} className="crm-item-wrapper">
+                                                <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="new" />
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="empty-state">No closed deals yet.</p>
+                                ) : (
+                                    <p className="empty-state">No new leads at the moment.</p>
+                                )}
+                            </motion.section>
                         )}
-                    </motion.section>
+
+                        {/* --- REMINDER TAB --- */}
+                        {activeTab === 'reminder' && (
+                            <motion.section
+                                className="crm-section"
+                                initial="hidden" animate="visible" variants={containerVariants}
+                            >
+                                <div className="section-header">
+                                    <h2>🚀 Action Required</h2>
+                                    <span className="count-badge">{actionNeeded.length} leads</span>
+                                </div>
+                                {actionNeeded.length > 0 ? (
+                                    <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                        {actionNeeded.map(customer => (
+                                            <div key={customer.id} className="crm-item-wrapper">
+                                                <CustomerCard
+                                                    customer={customer}
+                                                    onCall={handleCall}
+                                                    onCallAction={handleCallAction}
+                                                    variant="urgent"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="empty-state">All caught up! Great job.</p>
+                                )}
+                            </motion.section>
+                        )}
+
+                        {/* --- UPCOMING TAB --- */}
+                        {activeTab === 'upcoming' && (
+                            <motion.section
+                                className="crm-section"
+                                initial="hidden" animate="visible" variants={containerVariants}
+                            >
+                                <div className="section-header">
+                                    <h2>📅 Upcoming</h2>
+                                </div>
+                                <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                    {upcoming.map(c => (
+                                        <div key={c.id} className="crm-item-wrapper">
+                                            <CustomerCard customer={c} onCall={handleCall} onCallAction={handleCallAction} variant="normal" />
+                                        </div>
+                                    ))}
+                                    {upcoming.length === 0 && <p className="empty-state">No upcoming follow-ups.</p>}
+                                </div>
+                            </motion.section>
+                        )}
+
+                        {/* --- CLOSED TAB --- */}
+                        {activeTab === 'closed' && (
+                            <motion.section
+                                className="crm-section"
+                                initial="hidden" animate="visible" variants={containerVariants}
+                            >
+                                <div className="section-header">
+                                    <h2>✅ Closed / Done <span className="count-badge">{completed.length}</span></h2>
+                                </div>
+                                {completed.length > 0 ? (
+                                    <div className={`crm-list ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                                        {completed.map(customer => (
+                                            <div key={customer.id} className="crm-item-wrapper">
+                                                <CustomerCard
+                                                    customer={customer}
+                                                    onCall={handleCall}
+                                                    onCallAction={handleCallAction}
+                                                    variant="completed"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="empty-state">No closed deals yet.</p>
+                                )}
+                            </motion.section>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -655,6 +726,7 @@ const Home = () => {
                     customer={selectedCustomer}
                     onClose={() => setSelectedCustomer(null)}
                     onUpdate={handleUpdateStatus}
+                    activeWorkflow={activeWorkflow}
                 />
             )}
 
@@ -711,6 +783,14 @@ const Home = () => {
                             }}>
                                 <FaList />
                                 My Customers
+                            </button>
+
+                            <button className="menu-item" onClick={() => {
+                                setShowProfileMenu(false);
+                                navigate('/workflow');
+                            }}>
+                                <FaTasks />
+                                Work Flow
                             </button>
 
                             <button className="menu-item" onClick={() => {

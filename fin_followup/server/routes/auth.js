@@ -248,11 +248,116 @@ router.patch('/settings/:userId', async (req, res) => {
                 name: user.name,
                 agencyName: user.agencyName,
                 photoUrl: user.photoUrl,
-                reminderHoursBefore: user.reminderHoursBefore
+                reminderHoursBefore: user.reminderHoursBefore,
+                securityQuestion: user.securityQuestion // Include this
             }
         });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// 6. Set/Update Security Question (Authenticated)
+router.put('/security-question', authMiddleware, async (req, res) => {
+    let { question, answer } = req.body;
+    if (question) question = question.trim();
+    if (answer) answer = answer.trim().toLowerCase(); // Normalize answer
+
+    const { userId } = req.user;
+
+    if (!question || !answer) {
+        return res.status(400).json({ error: "Question and Answer are required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Hash the answer for security
+        const salt = await bcrypt.genSalt(10);
+        const hashedAnswer = await bcrypt.hash(answer, salt);
+
+        user.securityQuestion = question;
+        user.securityAnswer = hashedAnswer;
+        await user.save();
+
+        res.json({
+            message: "Security question updated",
+            user: {
+                _id: user._id,
+                email: user.email,
+                securityQuestion: user.securityQuestion
+            }
+        });
+    } catch (err) {
+        console.error("Error setting security question:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// 7. Forgot Password - Get Question (Public)
+router.post('/forgot-password', async (req, res) => {
+    let { email } = req.body;
+    if (email) email = email.trim();
+
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            // Return fake success or ambiguous error to prevent enumeration?
+            // For this app, let's return error for UX simplicity.
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        if (!user.securityQuestion) {
+            return res.status(400).json({ error: "Security question not set for this account. Please contact admin." });
+        }
+
+        res.json({
+            securityQuestion: user.securityQuestion,
+            userId: user._id // Optionally send ID if needed, but email is enough for next step usually.
+        });
+    } catch (err) {
+        console.error("Forgot password error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// 8. Reset Password with Security Answer (Public)
+router.post('/reset-password-security', async (req, res) => {
+    let { email, answer, newPassword } = req.body;
+    if (email) email = email.trim();
+    if (answer) answer = answer.trim().toLowerCase();
+    if (newPassword) newPassword = newPassword.trim();
+
+    if (!email || !answer || !newPassword) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (!user.securityAnswer) {
+            return res.status(400).json({ error: "Security reset not enabled for this account" });
+        }
+
+        // Verify Answer
+        const isMatch = await bcrypt.compare(answer, user.securityAnswer);
+        if (!isMatch) {
+            return res.status(401).json({ error: "Incorrect security answer" });
+        }
+
+        // Reset Password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ message: "Password reset successfully. Please login." });
+    } catch (err) {
+        console.error("Reset password error:", err);
         res.status(500).json({ error: "Server error" });
     }
 });

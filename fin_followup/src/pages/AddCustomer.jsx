@@ -38,6 +38,26 @@ const AddCustomer = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [uploadingProfile, setUploadingProfile] = useState(false);
+    const [status, setStatus] = useState('NEW'); // Default status
+
+    // Fetch active workflow to set default status
+    React.useEffect(() => {
+        const fetchWorkflow = async () => {
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+            if (storedUser && storedUser.activeWorkflowId) {
+                try {
+                    const { data } = await api.get(`/workflows/${storedUser._id || storedUser.id}`);
+                    const active = data.find(w => w._id === storedUser.activeWorkflowId || w._id == storedUser.activeWorkflowId);
+                    if (active && active.steps.length > 0) {
+                        setStatus(active.steps[0]);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch active workflow", e);
+                }
+            }
+        };
+        if (!id) fetchWorkflow(); // Only for new customers
+    }, [id]);
 
     // Fetch data if editing
     React.useEffect(() => {
@@ -261,6 +281,7 @@ const AddCustomer = () => {
                 formData.append('coordinates', JSON.stringify(coordinates));
             }
             formData.append('loanType', loanType);
+            if (!id && status) formData.append('status', status); // Send correct default status on create
 
             if (photo) formData.append('photo', photo);
             if (profilePic) formData.append('profilePic', profilePic);

@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 
 import Home from './pages/Home';
 import AddCustomer from './pages/AddCustomer';
 import MyCustomers from './pages/MyCustomers';
+import WorkflowManager from './pages/WorkflowManager';
 import Register from './pages/Register';
 import PermissionRequest from './components/PermissionRequest';
 
@@ -41,6 +43,10 @@ function App() {
           !user ? <Register /> : <Navigate to="/" />
         } />
 
+        <Route path="/forgot-password" element={
+          !user ? <ForgotPassword /> : <Navigate to="/" />
+        } />
+
         <Route path="/" element={
           user ? (user.name ? <Home /> : <Navigate to="/register" />) : <Navigate to="/login" />
         } />
@@ -51,6 +57,10 @@ function App() {
 
         <Route path="/my-customers" element={
           user ? (user.name ? <MyCustomers /> : <Navigate to="/register" />) : <Navigate to="/login" />
+        } />
+
+        <Route path="/workflow" element={
+          user ? (user.name ? <WorkflowManager /> : <Navigate to="/register" />) : <Navigate to="/login" />
         } />
 
         <Route path="/edit-customer/:id" element={
