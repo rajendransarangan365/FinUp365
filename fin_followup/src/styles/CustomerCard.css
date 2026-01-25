@@ -15,13 +15,27 @@
     height: 100%;
 }
 
-/* Border Indicators */
-.crm-card.urgent-border {
-    border-left: 5px solid #ff6b6b;
+/* Border Indicators - Using pseudo-element to respect border-radius */
+.crm-card.urgent-border::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: #ff6b6b;
+    border-radius: 16px 0 0 16px;
 }
 
-.crm-card.new-border {
-    border-left: 5px solid #8e44ad;
+.crm-card.new-border::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: #8e44ad;
+    border-radius: 16px 0 0 16px;
 }
 
 .crm-card:hover {
@@ -169,11 +183,14 @@
     font-size: 0.75rem;
     font-weight: 700;
     margin-top: 6px;
+    margin-right: 8px;
+    /* Add spacing between badges */
     align-self: flex-start;
 }
 
 .grid-view .crm-date-badge {
     align-self: center;
+    margin-right: 0;
 }
 
 /* Right Actions Column */
