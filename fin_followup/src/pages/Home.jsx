@@ -300,7 +300,7 @@ const Home = () => {
 
         // Status Filter
         if (filters.status !== 'ALL') {
-            filtered = filtered.filter(c => c.status === filters.status);
+            filtered = filtered.filter(c => (c.status || '').toLowerCase() === filters.status.toLowerCase());
         }
 
         // Date Range Filter
@@ -551,6 +551,7 @@ const Home = () => {
                 activeFilters={filters}
                 totalCount={customers.length}
                 filteredCount={filteredCustomers.length}
+                activeWorkflow={activeWorkflow}
             />
 
             <div className="crm-content">

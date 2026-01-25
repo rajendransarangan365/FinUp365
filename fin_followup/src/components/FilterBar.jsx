@@ -2,18 +2,31 @@ import React, { useState } from 'react';
 import { FaSearch, FaTimes, FaFilter, FaCheckCircle, FaTimesCircle, FaBell, FaClock, FaStar, FaCalendarAlt } from 'react-icons/fa';
 import '../styles/FilterBar.css';
 
-const FilterBar = ({ onFilterChange, activeFilters, totalCount, filteredCount }) => {
+const FilterBar = ({ onFilterChange, activeFilters, totalCount, filteredCount, activeWorkflow }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilters, setShowFilters] = useState(false);
 
-    const statusFilters = [
-        { value: 'ALL', label: 'All', icon: <FaFilter /> },
-        { value: 'NEW', label: 'New', icon: <FaStar /> },
-        { value: 'TODAY', label: 'Today', icon: <FaBell /> },
-        { value: 'NORMAL', label: 'Under Process', icon: <FaClock /> },
-        { value: 'CONVERTED', label: 'Converted', icon: <FaCheckCircle /> },
-        { value: 'NOT_INTERESTED', label: 'Not Interested', icon: <FaTimesCircle /> }
-    ];
+    let statusFilters;
+
+    if (activeWorkflow) {
+        statusFilters = [
+            { value: 'ALL', label: 'All', icon: <FaFilter /> },
+            ...activeWorkflow.steps.map(step => ({
+                value: step,
+                label: step,
+                icon: <FaCheckCircle /> // Generic icon for custom steps
+            }))
+        ];
+    } else {
+        statusFilters = [
+            { value: 'ALL', label: 'All', icon: <FaFilter /> },
+            { value: 'NEW', label: 'New', icon: <FaStar /> },
+            { value: 'TODAY', label: 'Today', icon: <FaBell /> },
+            { value: 'NORMAL', label: 'Under Process', icon: <FaClock /> },
+            { value: 'CONVERTED', label: 'Converted', icon: <FaCheckCircle /> },
+            { value: 'NOT_INTERESTED', label: 'Not Interested', icon: <FaTimesCircle /> }
+        ];
+    }
 
     const dateFilters = [
         { value: 'ALL', label: 'All Time' },
