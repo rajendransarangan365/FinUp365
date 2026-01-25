@@ -125,12 +125,35 @@ router.post('/', cpUpload, async (req, res) => {
     }
 });
 
-// 2. Get Customers for User
+// 2. Get Customers for User (with Pagination)
 router.get('/:userId', async (req, res) => {
     try {
-        const customers = await Customer.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-        res.json(customers);
+        const { page = 1, limit = 10 } = req.query;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Get total count for hasMore calculation
+        const totalCount = await Customer.countDocuments({ userId: req.params.userId });
+
+        // Fetch paginated customers
+        const customers = await Customer.find({ userId: req.params.userId })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum);
+
+        res.json({
+            customers,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limitNum),
+                hasMore: skip + customers.length < totalCount
+            }
+        });
     } catch (err) {
+        console.error("Error fetching customers:", err);
         res.status(500).json({ error: "Internal Error" });
     }
 });

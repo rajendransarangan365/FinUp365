@@ -29,6 +29,11 @@ const Home = () => {
     });
     const [activeTab, setActiveTab] = useState('reminder');
 
+    // Pagination states
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
     const handleLogout = () => {
         // ... logout logic ...
         // Direct logout for better UX/Mobile compatibility
@@ -53,44 +58,98 @@ const Home = () => {
         return u?.photoUrl;
     }
 
-    React.useEffect(() => {
-        // ... existing effect ...
-        const fetchCustomers = async () => {
-            const storedUser = JSON.parse(localStorage.getItem('user'));
-            if (!storedUser || !storedUser._id) return;
+    // Fetch customers with pagination
+    const fetchCustomers = async (pageNum = 1, append = false) => {
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (!storedUser || !storedUser._id) return;
 
-            try {
-                const { data } = await api.get(`/customers/${storedUser._id}`);
-                // Transform data to match UI expectations if needed
-                console.log("Raw Customers Data:", data);
-                const transformed = data.map((c, index) => {
-                    // Normalize 'Today' to actual YYYY-MM-DD (Local Time)
-                    let fDate = c.followUpDate;
-                    if (fDate === 'Today') {
-                        const now = new Date();
-                        fDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-                    }
+        try {
+            if (append) {
+                setIsFetchingMore(true);
+            } else {
+                setLoading(true);
+            }
 
-                    return {
-                        ...c,
-                        id: c._id || `temp-${index}-${Date.now()}`, // Fallback for Mongo _id
-                        followUpDate: fDate
-                    };
-                });
-                // Sort action needed by date? (Optional, but good for UX)
-                // transformed.sort((a,b) => new Date(a.followUpDate) - new Date(b.followUpDate));
+            const { data } = await api.get(`/customers/${storedUser._id}?page=${pageNum}&limit=10`);
 
-                console.log("Transformed Customers:", transformed);
+            console.log("API Response:", data); // Debug log
+
+            let customersData = [];
+            let paginationData = { hasMore: false };
+
+            // Handle both old format (array) and new format (object with customers)
+            if (Array.isArray(data)) {
+                // Old format: data is directly an array of customers
+                console.warn("Received old API format (array). Consider updating backend.");
+                customersData = data;
+                paginationData.hasMore = false; // No pagination in old format
+            } else if (data && data.customers) {
+                // New format: data has customers array and pagination object
+                customersData = data.customers;
+                paginationData = data.pagination || {};
+            } else {
+                console.error("Invalid API response:", data);
+                setCustomers([]);
+                setHasMore(false);
+                return;
+            }
+
+            // Transform data
+            const transformed = customersData.map((c, index) => {
+                let fDate = c.followUpDate;
+                if (fDate === 'Today') {
+                    const now = new Date();
+                    fDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                }
+
+                return {
+                    ...c,
+                    id: c._id || `temp-${index}-${Date.now()}`,
+                    followUpDate: fDate
+                };
+            });
+
+            if (append) {
+                setCustomers(prev => [...prev, ...transformed]);
+            } else {
                 setCustomers(transformed);
-            } catch (error) {
-                console.error("Failed to fetch customers", error);
-            } finally {
-                setLoading(false);
+            }
+
+            setHasMore(paginationData.hasMore || false);
+            setPage(pageNum);
+        } catch (error) {
+            console.error("Failed to fetch customers", error);
+            setCustomers([]); // Set empty array on error
+            setHasMore(false);
+        } finally {
+            setLoading(false);
+            setIsFetchingMore(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchCustomers(1, false);
+    }, []);
+
+    // Infinite scroll effect
+    React.useEffect(() => {
+        const handleScroll = () => {
+            // Check if user has scrolled near bottom (within 500px)
+            const scrollHeight = document.documentElement.scrollHeight;
+            const scrollTop = document.documentElement.scrollTop;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollHeight - scrollTop - clientHeight < 500) {
+                // Near bottom, fetch more if available and not already fetching
+                if (hasMore && !isFetchingMore && !loading) {
+                    fetchCustomers(page + 1, true);
+                }
             }
         };
 
-        fetchCustomers();
-    }, []);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [hasMore, isFetchingMore, loading, page]);
 
     const handleCall = (customer) => {
         // ... existing ...
@@ -545,6 +604,26 @@ const Home = () => {
                     </motion.section>
                 )}
             </div>
+
+            {/* Loading Indicator for Infinite Scroll */}
+            {isFetchingMore && (
+                <div style={{
+                    textAlign: 'center',
+                    padding: '20px',
+                    color: 'var(--color-primary)'
+                }}>
+                    <div style={{
+                        display: 'inline-block',
+                        width: '30px',
+                        height: '30px',
+                        border: '3px solid rgba(66, 133, 244, 0.2)',
+                        borderTop: '3px solid var(--color-primary)',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }}></div>
+                    <p style={{ marginTop: '10px', fontSize: '0.9rem' }}>Loading more customers...</p>
+                </div>
+            )}
 
             {/* Floating Add Button - Neumorphic */}
             <motion.button

@@ -20,6 +20,8 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
     'http://localhost:5173',
     'https://localhost:5173',
+    'http://localhost:5174', // Alternative port
+    'http://localhost:3000', // Alternative port
     process.env.FRONTEND_URL // Your Vercel frontend URL
 ].filter(Boolean); // Remove undefined values
 
@@ -28,10 +30,16 @@ app.use(cors({
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
+        // In development, allow all localhost origins
+        if (process.env.NODE_ENV !== 'production' && origin && origin.includes('localhost')) {
+            return callback(null, true);
+        }
+
         // Check if origin is in allowedOrigins or is a vercel.app domain
-        if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        if (allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
             callback(null, true);
         } else {
+            console.warn(`CORS blocked origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
