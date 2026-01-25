@@ -221,6 +221,11 @@
     transform: scale(0.9);
 }
 
+/* Calendar Button Styling */
+.calendar-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
 /* Status Badges */
 .status-badge {
     display: inline-flex;

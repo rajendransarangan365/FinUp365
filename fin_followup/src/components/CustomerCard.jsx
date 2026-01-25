@@ -1,6 +1,7 @@
 import React from 'react';
-import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle, FaBell, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaPhoneAlt, FaUser, FaCalendarAlt, FaStar, FaCheckCircle, FaTimesCircle, FaBell, FaClock, FaMapMarkerAlt, FaCalendarPlus } from 'react-icons/fa';
 import '../styles/CustomerCard.css';
+import CalendarService from '../services/CalendarService';
 
 const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) => {
 
@@ -49,6 +50,17 @@ const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) =>
     };
 
     const statusBadge = getStatusBadge();
+
+    // Handle add to calendar
+    const handleAddToCalendar = (e) => {
+        e.stopPropagation();
+        if (!customer.followUpDate) {
+            alert('No follow-up date set for this customer.');
+            return;
+        }
+        const user = JSON.parse(localStorage.getItem('user'));
+        CalendarService.downloadICS(customer, user?.reminderHoursBefore || 2);
+    };
 
     return (
         <div
@@ -117,6 +129,17 @@ const CustomerCard = ({ customer, onCall, onCallAction, variant = 'normal' }) =>
                 <div className="crm-actions">
                     {/* Star Icon for New/Important */}
                     {customer.status === 'NEW' && <FaStar className="star-icon" />}
+
+                    {/* Calendar Button */}
+                    {customer.followUpDate && (
+                        <button
+                            className="call-action-btn calendar-btn"
+                            onClick={handleAddToCalendar}
+                            title="Add to Calendar"
+                        >
+                            <FaCalendarPlus />
+                        </button>
+                    )}
 
                     <button
                         className="call-action-btn navigate-btn"

@@ -7,6 +7,7 @@ import AudioPlayer from './AudioPlayer';
 const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
     const [outcome, setOutcome] = useState('RESCHEDULE'); // RESCHEDULE | CONVERTED | NOT_INTERESTED
     const [date, setDate] = useState('');
+    const [time, setTime] = useState('09:00'); // Default to 9 AM
     const [note, setNote] = useState('');
     const [activeHistoryTab, setActiveHistoryTab] = useState('followups'); // 'followups' | 'calls'
 
@@ -72,6 +73,7 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                 status: outcome,
                 outcome,
                 nextDate: date,
+                nextTime: time, // Include time
                 note,
                 audioBlob
             });
@@ -172,13 +174,40 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate }) => {
                                     setDate(d.toISOString().split('T')[0]);
                                 }}>+1 Week</button>
                             </div>
-                            <input
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                                className="date-input"
-                                disabled={isSaving}
-                            />
+
+                            {/* Date and Time Input Row */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem', color: '#636e72', marginBottom: '6px', display: 'block' }}>Date</label>
+                                    <input
+                                        type="date"
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                        className="date-input"
+                                        disabled={isSaving}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem', color: '#636e72', marginBottom: '6px', display: 'block' }}>Time</label>
+                                    <input
+                                        type="time"
+                                        value={time}
+                                        onChange={(e) => setTime(e.target.value)}
+                                        className="date-input"
+                                        style={{ fontFamily: 'inherit' }}
+                                        disabled={isSaving}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Quick Time Presets */}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                <button className="chip-sm" onClick={() => setTime('09:00')} style={{ fontSize: '0.75rem' }}>9 AM</button>
+                                <button className="chip-sm" onClick={() => setTime('12:00')} style={{ fontSize: '0.75rem' }}>12 PM</button>
+                                <button className="chip-sm" onClick={() => setTime('15:00')} style={{ fontSize: '0.75rem' }}>3 PM</button>
+                                <button className="chip-sm" onClick={() => setTime('18:00')} style={{ fontSize: '0.75rem' }}>6 PM</button>
+                                <button className="chip-sm" onClick={() => setTime('21:00')} style={{ fontSize: '0.75rem' }}>9 PM</button>
+                            </div>
                         </div>
                     )}
 

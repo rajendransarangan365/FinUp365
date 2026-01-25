@@ -13,6 +13,7 @@ const CustomerSchema = new mongoose.Schema({
     loanType: { type: String },
     status: { type: String, default: 'NEW' },
     followUpDate: { type: String, default: 'Today' },
+    followUpTime: { type: String, default: '09:00' }, // Meeting time in HH:MM format
     photoUrl: { type: String },             // Business Card / Shop Photo
     profilePicUrl: { type: String },        // Customer Avatar
     audioUrl: { type: String },

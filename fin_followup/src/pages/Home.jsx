@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar, FaCog } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 import logo from '../assets/logo.png';
@@ -11,6 +11,8 @@ import StatusUpdateDialog from '../components/StatusUpdateDialog';
 import ProfileDialog from '../components/ProfileDialog';
 import CallDispositionDialog from '../components/CallDispositionDialog';
 import FilterBar from '../components/FilterBar';
+import SettingsDialog from '../components/SettingsDialog';
+import NotificationService from '../services/NotificationService';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -34,6 +36,10 @@ const Home = () => {
     const [hasMore, setHasMore] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
 
+    // Settings and notification
+    const [showSettings, setShowSettings] = useState(false);
+    const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+
     const handleLogout = () => {
         // ... logout logic ...
         // Direct logout for better UX/Mobile compatibility
@@ -43,6 +49,7 @@ const Home = () => {
     };
 
     const handleUpdateUser = (updatedUser) => {
+        setCurrentUser(updatedUser);
         window.dispatchEvent(new Event('storage'));
     };
 
@@ -129,6 +136,11 @@ const Home = () => {
 
     React.useEffect(() => {
         fetchCustomers(1, false);
+
+        // Request notification permission and check upcoming meetings
+        NotificationService.requestPermission().then(() => {
+            // Will check meetings after customers are loaded
+        });
     }, []);
 
     // Infinite scroll effect
@@ -662,6 +674,16 @@ const Home = () => {
                 />
             )}
 
+            {/* Settings Dialog */}
+            {showSettings && (
+                <SettingsDialog
+                    isOpen={showSettings}
+                    onClose={() => setShowSettings(false)}
+                    user={currentUser}
+                    onUpdate={handleUpdateUser}
+                />
+            )}
+
             {/* Profile Sidebar Menu */}
             {showProfileMenu && (
                 <>
@@ -689,6 +711,14 @@ const Home = () => {
                             }}>
                                 <FaList />
                                 My Customers
+                            </button>
+
+                            <button className="menu-item" onClick={() => {
+                                setShowProfileMenu(false);
+                                setShowSettings(true);
+                            }}>
+                                <FaCog />
+                                Reminder Settings
                             </button>
 
                             <button className="menu-item logout" onClick={handleLogout}>

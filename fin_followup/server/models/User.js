@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
     name: { type: String },
     agencyName: { type: String },
     photoUrl: { type: String },
+    reminderHoursBefore: { type: Number, default: 2 }, // Hours before meeting to send reminder
     createdAt: { type: Date, default: Date.now }
 });
 

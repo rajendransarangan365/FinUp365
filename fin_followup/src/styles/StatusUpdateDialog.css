@@ -39,6 +39,8 @@
     margin-right: -10px;
     /* Offset scrollbar to edge of padding-box if desired, or keep 0 for truly inset */
     padding-right: 10px;
+    padding-top: 4px;
+    /* Add top padding to prevent cutoff */
     /* Compensate for margin if used, or just spacing */
 
     /* Custom Scrollbar override if needed, but global global scrollbar helps */
@@ -167,7 +169,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 16px;
+    /* Increased from 4px to create more space */
 }
 
 .dialog-card h3 {
