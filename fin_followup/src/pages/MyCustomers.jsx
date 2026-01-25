@@ -13,22 +13,77 @@ const MyCustomers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
 
+    // Pagination states
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
     useEffect(() => {
-        fetchCustomers();
+        fetchCustomers(1, false);
     }, []);
 
-    const fetchCustomers = async () => {
+    // Infinite scroll effect
+    useEffect(() => {
+        if (searchTerm) return; // Disable infinite scroll when searching
+
+        const handleScroll = () => {
+            const scrollHeight = document.documentElement.scrollHeight;
+            const scrollTop = document.documentElement.scrollTop;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollHeight - scrollTop - clientHeight < 300) {
+                if (hasMore && !isFetchingMore && !loading) {
+                    fetchCustomers(page + 1, true);
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [hasMore, isFetchingMore, loading, page, searchTerm]);
+
+    const fetchCustomers = async (pageNum = 1, append = false) => {
         if (!userId) {
             navigate('/login');
             return;
         }
+
         try {
-            const response = await api.get(`/customers/${userId}`);
-            setCustomers(response.data);
-            setLoading(false);
+            if (append) {
+                setIsFetchingMore(true);
+            } else {
+                setLoading(true);
+            }
+
+            const response = await api.get(`/customers/${userId}?page=${pageNum}&limit=10`);
+
+            // Handle both old format (array) and new format (object with customers)
+            let customersData = [];
+            let paginationData = { hasMore: false };
+
+            if (Array.isArray(response.data)) {
+                customersData = response.data;
+                paginationData.hasMore = false;
+            } else if (response.data && response.data.customers) {
+                customersData = response.data.customers;
+                paginationData = response.data.pagination || {};
+            }
+
+            if (append) {
+                setCustomers(prev => [...prev, ...customersData]);
+            } else {
+                setCustomers(customersData);
+            }
+
+            setHasMore(paginationData.hasMore || false);
+            setPage(pageNum);
         } catch (error) {
             console.error("Error fetching customers:", error);
+            setCustomers([]);
+            setHasMore(false);
+        } finally {
             setLoading(false);
+            setIsFetchingMore(false);
         }
     };
 
@@ -48,11 +103,21 @@ const MyCustomers = () => {
         navigate(`/edit-customer/${id}`);
     };
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone.includes(searchTerm) ||
-        (c.customerName && c.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    // Helper to get random color for avatar
+    const getRandomColor = (name) => {
+        const colors = ['#a29bfe', '#ffeaa7', '#55efc4', '#81ecec', '#74b9ff', '#fab1a0'];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    const filteredCustomers = searchTerm
+        ? customers.filter(c =>
+            c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.phone.includes(searchTerm) ||
+            (c.customerName && c.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
+        : customers;
 
     return (
         <div className="my-customers-page">
@@ -76,7 +141,7 @@ const MyCustomers = () => {
             </div>
 
             <div className="customers-list">
-                {loading ? (
+                {loading && customers.length === 0 ? (
                     <div className="loading">Loading customers...</div>
                 ) : filteredCustomers.length === 0 ? (
                     <div className="no-customers">
@@ -84,33 +149,70 @@ const MyCustomers = () => {
                         <button className="add-btn" onClick={() => navigate('/add-customer')}>Add New Customer</button>
                     </div>
                 ) : (
-                    filteredCustomers.map(customer => (
-                        <div key={customer._id} className="customer-list-item">
-                            <div className="customer-info">
-                                <div className="customer-avatar">
-                                    <img
-                                        src={customer.profilePicUrl || "https://via.placeholder.com/50"}
-                                        alt={customer.name}
-                                    />
+                    <>
+                        {filteredCustomers.map(customer => (
+                            <div key={customer._id} className="customer-list-item">
+                                <div className="customer-info">
+                                    <div className="customer-avatar">
+                                        {customer.profilePicUrl ? (
+                                            <img
+                                                src={customer.profilePicUrl}
+                                                alt={customer.name}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <div
+                                            className="avatar-placeholder"
+                                            style={{
+                                                background: getRandomColor(customer.name || 'User'),
+                                                display: customer.profilePicUrl ? 'none' : 'flex'
+                                            }}
+                                        >
+                                            {(customer.name || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                    </div>
+                                    <div className="customer-details">
+                                        <h3>{customer.name}</h3>
+                                        <p className="customer-phone">{customer.phone}</p>
+                                        <span className={`status-badge ${customer.status?.toLowerCase() || 'new'}`}>
+                                            {customer.status || 'NEW'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="customer-details">
-                                    <h3>{customer.name}</h3>
-                                    <p className="customer-phone">{customer.phone}</p>
-                                    <span className={`status-badge ${customer.status?.toLowerCase() || 'new'}`}>
-                                        {customer.status || 'NEW'}
-                                    </span>
+                                <div className="customer-actions">
+                                    <button className="icon-btn edit-btn" onClick={() => handleEdit(customer._id)}>
+                                        <FaEdit />
+                                    </button>
+                                    <button className="icon-btn delete-btn" onClick={() => handleDelete(customer._id, customer.name)}>
+                                        <FaTrash />
+                                    </button>
                                 </div>
                             </div>
-                            <div className="customer-actions">
-                                <button className="icon-btn edit-btn" onClick={() => handleEdit(customer._id)}>
-                                    <FaEdit />
-                                </button>
-                                <button className="icon-btn delete-btn" onClick={() => handleDelete(customer._id, customer.name)}>
-                                    <FaTrash />
-                                </button>
+                        ))}
+
+                        {/* Loading Indicator for Infinite Scroll */}
+                        {isFetchingMore && !searchTerm && (
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '20px',
+                                color: 'var(--color-primary)'
+                            }}>
+                                <div style={{
+                                    display: 'inline-block',
+                                    width: '30px',
+                                    height: '30px',
+                                    border: '3px solid rgba(66, 133, 244, 0.2)',
+                                    borderTop: '3px solid var(--color-primary)',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite'
+                                }}></div>
+                                <p style={{ marginTop: '10px', fontSize: '0.9rem' }}>Loading more customers...</p>
                             </div>
-                        </div>
-                    ))
+                        )}
+                    </>
                 )}
             </div>
         </div>
