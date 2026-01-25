@@ -24,11 +24,12 @@ mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI)
     .then(() => {
         console.log('✅ MongoDB Connected');
         console.log('✅ Workflow Routes Registered');
+        console.log('✅ Auth Routes Ready');
     })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // Routes
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/workflows', workflowRoutes);
 
@@ -57,3 +58,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
+
+export default app;
