@@ -5,7 +5,14 @@ import { FiX } from 'react-icons/fi';
 import AudioPlayer from './AudioPlayer';
 
 const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => {
-    const [outcome, setOutcome] = useState(activeWorkflow ? activeWorkflow.steps[0] : 'RESCHEDULE'); // Default to first step or standard default
+    const [outcome, setOutcome] = useState(() => {
+        if (activeWorkflow) {
+            return activeWorkflow.steps.includes(customer.status)
+                ? customer.status
+                : activeWorkflow.steps[0];
+        }
+        return 'RESCHEDULE';
+    });
     const [date, setDate] = useState('');
     const [time, setTime] = useState('09:00'); // Default to 9 AM
     const [note, setNote] = useState('');
