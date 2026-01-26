@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import customerRoutes from './routes/customers.js';
 import workflowRoutes from './routes/workflow.js';
+import templateRoutes from './routes/templates.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI)
     .then(() => {
         console.log('✅ MongoDB Connected');
         console.log('✅ Workflow Routes Registered');
+        console.log('✅ Template Routes Registered');
         console.log('✅ Auth Routes Ready');
     })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
@@ -32,6 +34,7 @@ mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/workflows', workflowRoutes);
+app.use('/api/templates', templateRoutes);
 
 // Static files (Code for serving frontend in production or uploads)
 const __filename = fileURLToPath(import.meta.url);

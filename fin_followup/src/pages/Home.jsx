@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CustomerCard from '../components/CustomerCard';
-import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar, FaCog, FaTasks } from 'react-icons/fa';
+
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
 import logo from '../assets/logo.png';
@@ -12,7 +12,9 @@ import ProfileDialog from '../components/ProfileDialog';
 import CallDispositionDialog from '../components/CallDispositionDialog';
 import FilterBar from '../components/FilterBar';
 import SettingsDialog from '../components/SettingsDialog';
+import TemplateManagerDialog from '../components/TemplateManagerDialog';
 import NotificationService from '../services/NotificationService';
+import { FaPlus, FaSearch, FaSignOutAlt, FaThLarge, FaList, FaUserCog, FaTimes, FaChartBar, FaCog, FaTasks, FaWhatsapp } from 'react-icons/fa';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -38,6 +40,7 @@ const Home = () => {
 
     // Settings and notification
     const [showSettings, setShowSettings] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
     const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user')));
     const [activeWorkflow, setActiveWorkflow] = useState(null);
 
@@ -796,19 +799,37 @@ const Home = () => {
 
                             <button className="menu-item" onClick={() => {
                                 setShowProfileMenu(false);
+                                setShowTemplates(true);
+                            }}>
+                                <FaWhatsapp style={{ color: '#25D366' }} />
+                                Message Templates
+                            </button>
+
+                            <button className="menu-item" onClick={() => {
+                                setShowProfileMenu(false);
                                 setShowSettings(true);
                             }}>
                                 <FaCog />
-                                Reminder Settings
+                                Settings
                             </button>
+
+                            <div className="menu-divider"></div>
 
                             <button className="menu-item logout" onClick={handleLogout}>
                                 <FaSignOutAlt />
-                                Log Out
+                                Logout
                             </button>
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Template Manager Dialog */}
+            {showTemplates && (
+                <TemplateManagerDialog
+                    isOpen={showTemplates}
+                    onClose={() => setShowTemplates(false)}
+                />
             )}
         </div>
     );

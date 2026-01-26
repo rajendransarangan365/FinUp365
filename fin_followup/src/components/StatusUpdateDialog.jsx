@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '../styles/StatusUpdateDialog.css';
-import { FaMicrophone, FaTrash, FaCheckCircle } from 'react-icons/fa';
+import { FaMicrophone, FaTrash, FaCheckCircle, FaWhatsapp } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
 import AudioPlayer from './AudioPlayer';
+import api from '../services/api';
 
 const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => {
     const [outcome, setOutcome] = useState(() => {
@@ -28,6 +29,74 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => 
     const [showToast, setShowToast] = useState(false);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
+
+    // WhatsApp Template State
+    const [templates, setTemplates] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState('');
+    const [whatsappMessage, setWhatsappMessage] = useState('');
+    const [showWhatsappPreview, setShowWhatsappPreview] = useState(false);
+
+    useEffect(() => {
+        // Fetch templates
+        const fetchTemplates = async () => {
+            try {
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (user?._id) {
+                    const { data } = await api.get(`/templates/${user._id}`);
+                    setTemplates(data);
+                }
+            } catch (error) {
+                console.error("Failed to load templates", error);
+            }
+        };
+        fetchTemplates();
+    }, []);
+
+    const handleTemplateSelect = (e) => {
+        const templateId = e.target.value;
+        setSelectedTemplate(templateId);
+        if (templateId) {
+            const tmpl = templates.find(t => t._id === templateId);
+            if (tmpl) {
+                // Replace placeholders if any (simple implementation)
+                let msg = tmpl.content;
+                msg = msg.replace(/{customerName}/g, customer.name);
+                setWhatsappMessage(msg);
+                setShowWhatsappPreview(true);
+            }
+        } else {
+            setWhatsappMessage('');
+            setShowWhatsappPreview(false);
+        }
+    };
+
+    const handleSendWhatsapp = () => {
+        if (!whatsappMessage) return;
+
+        // Format phone number
+        let phone = customer.phone.replace(/\D/g, '');
+        if (phone.length === 10) phone = '91' + phone;
+
+        // Open WhatsApp
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`;
+        window.open(url, '_blank');
+
+        // Ask for confirmation
+        setTimeout(() => {
+            const isSent = window.confirm("Did you successfully send the message?");
+            if (isSent) {
+                // If yes, append to note with a special marker or just text
+                setNote(prev => {
+                    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const log = `[WhatsApp Sent at ${timestamp}: ${whatsappMessage.substring(0, 30)}${whatsappMessage.length > 30 ? '...' : ''}]`;
+                    return prev ? `${prev}\n${log}` : log;
+                });
+
+                // Optionally auto-set outcome to something positive if not set?
+                // For now, just logging to note is what was requested ("if send save that in floowup").
+            }
+        }, 1000);
+    };
 
     const toggleRecording = async () => {
         if (recording) {
@@ -82,7 +151,8 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => 
                 nextDate: date,
                 nextTime: time, // Include time
                 note,
-                audioBlob
+                audioBlob,
+                // We could explicitly pass whatsapp log if handled by backend separately
             });
             onClose();
         } catch (error) {
@@ -185,11 +255,12 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => 
                         </div>
                     )}
 
-                    {/* Standard Logic: Show Date Picker if RESCHEDULE or if using Workflow (assuming all workflow steps might need a next follow up date OR we allow it generically) */}
-                    {/* For Workflow, we allow date picker always, or we could make it configurable. For now, let's allow it so they can schedule the "Next Step" meeting. */}
+                    {/* Standard Logic: Show Date Picker if RESCHEDULE or if using Workflow */}
                     {(outcome === 'RESCHEDULE' || activeWorkflow) && (
                         <div className="date-picker-section">
-                            <label>Next Follow Up</label>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Next Follow Up</label>
+                            </div>
                             <div className="preset-dates">
                                 <button className="chip-sm" onClick={() => {
                                     const d = new Date(); d.setDate(d.getDate() + 1);
@@ -241,8 +312,46 @@ const StatusUpdateDialog = ({ customer, onClose, onUpdate, activeWorkflow }) => 
                         </div>
                     )}
 
+                    {/* WhatsApp Template Section */}
+                    {templates.length > 0 && (
+                        <div className="whatsapp-section" style={{ marginTop: '20px', padding: '15px', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#25D366', fontWeight: 'bold' }}>
+                                <FaWhatsapp size={20} /> WhatsApp Message
+                            </div>
+
+                            <select
+                                value={selectedTemplate}
+                                onChange={handleTemplateSelect}
+                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #25D366', marginBottom: '10px', background: 'white' }}
+                            >
+                                <option value="">-- Select a Template --</option>
+                                {templates.map(t => (
+                                    <option key={t._id} value={t._id}>{t.title}</option>
+                                ))}
+                            </select>
+
+                            {showWhatsappPreview && (
+                                <div className="whatsapp-preview">
+                                    <textarea
+                                        value={whatsappMessage}
+                                        onChange={(e) => setWhatsappMessage(e.target.value)}
+                                        placeholder="Message content..."
+                                        style={{ width: '100%', minHeight: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '10px', fontFamily: 'inherit', fontSize: '0.9rem' }}
+                                    />
+                                    <button
+                                        onClick={handleSendWhatsapp}
+                                        className="btn-whatsapp"
+                                        style={{ width: '100%', padding: '10px', background: '#25D366', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
+                                    >
+                                        <FaWhatsapp /> Send via WhatsApp
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Voice Note Section */}
-                    <div className="voice-section">
+                    <div className="voice-section" style={{ marginTop: '20px' }}>
                         {!audioUrl ? (
                             <button
                                 type="button"

@@ -125,6 +125,20 @@ router.post('/', cpUpload, async (req, res) => {
     }
 });
 
+// 1.5 Get Single Customer Details (for Edit)
+router.get('/details/:id', async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ error: "Customer not found" });
+        }
+        res.json(customer);
+    } catch (err) {
+        console.error("Error fetching customer details:", err);
+        res.status(500).json({ error: "Failed to fetch customer details" });
+    }
+});
+
 // 2. Get Customers for User (with Pagination)
 router.get('/:userId', async (req, res) => {
     try {

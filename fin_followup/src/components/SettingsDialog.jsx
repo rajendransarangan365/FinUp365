@@ -29,7 +29,7 @@ const SettingsDialog = ({ isOpen, onClose, user, onUpdate }) => {
         setTimeout(() => setMessage(''), 3000);
     };
 
-    const handleSave = async () => {
+    const handleSaveSettings = async () => {
         setSaving(true);
         setMessage('');
 
@@ -136,7 +136,7 @@ const SettingsDialog = ({ isOpen, onClose, user, onUpdate }) => {
                     <button className="btn-cancel" onClick={onClose} disabled={saving}>
                         Cancel
                     </button>
-                    <button className="btn-save" onClick={handleSave} disabled={saving}>
+                    <button className="btn-save" onClick={handleSaveSettings} disabled={saving}>
                         {saving ? 'Saving...' : 'Save Settings'}
                     </button>
                 </footer>

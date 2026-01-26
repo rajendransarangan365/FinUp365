@@ -64,37 +64,52 @@ const AddCustomer = () => {
         if (id) {
             const fetchCustomer = async () => {
                 try {
-                    const storedUser = JSON.parse(localStorage.getItem('user'));
-                    if (!storedUser) return;
-                    const { data } = await api.get(`/customers/${storedUser._id}`);
-                    // Wait, the API I have is getByUserId. I don't have getById public endpoint? 
-                    // Actually I implemented PUT /:id and DELETE /:id. I did NOT implement GET /:id specifically, but I can use GET /:userId and find it, or quickly add GET /customer-details/:id? 
-                    // Re-checking implementation plan... I missed GET /:id. 
-                    // However, I can just filter from the array returned by GET /:userId if I don't want to add a new endpoint, OR I can add GET /:id now.
-                    // The "My Customers" page lists them, maybe I can pass data via state? navigate('...', {state: customer}). 
-                    // But direct link access won't work.
-                    // Let's USE the /:userId endpoint and find it client side for now to save time, or add GET /:id.
-                    // Actually I can just add GET /details/:id to backend, or use the list. 
-                    // Let's use the list for now since we just implemented PUT/DELETE. 
-
-                    // Actually, looking at customers.js, I have `router.put('/:id', ...)` and `router.delete('/:id', ...)`.
-                    // A `router.get('/details/:id')` would be best. 
-                    // But to avoid context switching, I'll just fetch all for user and find the one. Efficient enough for small lists.
-
-                    const found = data.find(c => c._id === id);
-                    if (found) {
-                        setName(found.name);
-                        setCustomerName(found.customerName || '');
-                        setPhone(found.phone);
-                        setAddress(found.address || '');
-                        setCoordinates(found.coordinates || null);
-                        setLoanType(found.loanType || 'Business');
-                        setPreviewUrl(found.photoUrl || null);
-                        setProfilePreview(found.profilePicUrl || null);
-                        // Audio? found.audioUrl - difficult to put back into blob. Just show existing.
+                    const { data } = await api.get(`/customers/details/${id}`);
+                    if (data) {
+                        setName(data.name);
+                        setCustomerName(data.customerName || '');
+                        setPhone(data.phone);
+                        setAddress(data.address || '');
+                        setCoordinates(data.coordinates || null);
+                        setLoanType(data.loanType || 'Business');
+                        setPreviewUrl(data.photoUrl || null);
+                        setProfilePreview(data.profilePicUrl || null);
+                        // Ensure status is set if available
+                        if (data.status) setStatus(data.status);
                     }
                 } catch (err) {
-                    console.error("Failed to fetch customer for edit", err);
+                    console.warn("Failed to fetch customer using details endpoint, trying fallback list method...", err);
+
+                    // Fallback: Fetch all customers and filter (Works if server wasn't restarted)
+                    try {
+                        const storedUser = JSON.parse(localStorage.getItem('user'));
+                        if (!storedUser) return;
+
+                        const { data } = await api.get(`/customers/${storedUser._id || storedUser.id}?limit=1000`); // Increase limit for finding
+                        // api.get returns { customers: [], pagination: {} } based on my reading of customers.js
+                        // But wait, the list endpoint returns { customers: [...] } or just [...]?
+                        // Re-checking customers.js: res.json({ customers, pagination: ... })
+
+                        const list = data.customers || data; // Handle both structures just in case
+                        const found = Array.isArray(list) ? list.find(c => c._id === id) : null;
+
+                        if (found) {
+                            setName(found.name);
+                            setCustomerName(found.customerName || '');
+                            setPhone(found.phone);
+                            setAddress(found.address || '');
+                            setCoordinates(found.coordinates || null);
+                            setLoanType(found.loanType || 'Business');
+                            setPreviewUrl(found.photoUrl || null);
+                            setProfilePreview(found.profilePicUrl || null);
+                            if (found.status) setStatus(found.status);
+                        } else {
+                            alert("Customer not found.");
+                        }
+                    } catch (fallbackErr) {
+                        console.error("Fallback fetch failed", fallbackErr);
+                        alert("Failed to load customer details. Please restart the server.");
+                    }
                 }
             };
             fetchCustomer();
