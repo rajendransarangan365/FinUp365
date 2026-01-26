@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaCamera, FaMicrophone, FaSave, FaMapMarkerAlt, FaCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaCamera, FaMicrophone, FaSave, FaMapMarkerAlt, FaCheck, FaHome } from 'react-icons/fa';
 import { FiImage, FiUser, FiCreditCard } from 'react-icons/fi';
 import api from '../services/api';
 import '../styles/AddCustomer.css';
@@ -230,7 +230,11 @@ const AddCustomer = () => {
             alert("Business card uploaded to cloud! ✅");
         } catch (error) {
             console.error("Upload error:", error);
-            alert("Upload failed: " + (error.response?.data?.error || error.message));
+            if (error.response && error.response.status === 404) {
+                alert("Quick upload server update pending. Please click the main 'Update Customer' button at the bottom to save your image.");
+            } else {
+                alert("Upload failed: " + (error.response?.data?.error || error.message));
+            }
         } finally {
             setUploadingPhoto(false);
         }
@@ -266,7 +270,11 @@ const AddCustomer = () => {
             alert("Profile picture uploaded to cloud! ✅");
         } catch (error) {
             console.error("Upload error:", error);
-            alert("Upload failed: " + (error.response?.data?.error || error.message));
+            if (error.response && error.response.status === 404) {
+                alert("Quick upload server update pending. Please click the main 'Update Customer' button at the bottom to save your image.");
+            } else {
+                alert("Upload failed: " + (error.response?.data?.error || error.message));
+            }
         } finally {
             setUploadingProfile(false);
         }
@@ -355,11 +363,21 @@ const AddCustomer = () => {
 
     return (
         <div className="add-lead-screen">
-            <header className="add-lead-header">
-                <button className="icon-btn-back" onClick={() => navigate(-1)}>
-                    <FaArrowLeft />
+            <header className="add-lead-header" style={{ justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <button className="icon-btn-back" onClick={() => navigate(-1)}>
+                        <FaArrowLeft />
+                    </button>
+                    <h1>{id ? 'Edit Customer' : 'Add New Lead'}</h1>
+                </div>
+                <button
+                    className="icon-btn-back"
+                    onClick={() => navigate('/')}
+                    title="Go Home"
+                    style={{ background: '#f5f6fa', borderRadius: '50%', width: '40px', height: '40px' }}
+                >
+                    <FaHome color="#4318ff" />
                 </button>
-                <h1>{id ? 'Edit Customer' : 'Add New Lead'}</h1>
             </header>
 
             <form onSubmit={handleSubmit} className="add-lead-form">
