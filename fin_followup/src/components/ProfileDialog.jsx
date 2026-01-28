@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import '../styles/StatusUpdateDialog.css';
-import { FiX, FiCheck, FiCamera, FiLock, FiUser, FiBriefcase, FiEye, FiEyeOff, FiImage } from 'react-icons/fi';
+import { FiX, FiCheck, FiCamera, FiLock, FiUser, FiBriefcase, FiEye, FiEyeOff, FiImage, FiHelpCircle, FiKey } from 'react-icons/fi';
 import api from '../services/api';
 import ImageCropper from './ImageCropper';
 
@@ -27,6 +27,13 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     // Security Question State
     const [secQuestion, setSecQuestion] = useState(user.securityQuestion || '');
     const [secAnswer, setSecAnswer] = useState('');
+
+    // Sync state with user prop
+    React.useEffect(() => {
+        if (user.securityQuestion) {
+            setSecQuestion(user.securityQuestion);
+        }
+    }, [user.securityQuestion]);
 
     const showSnackbar = (message, type = 'error') => {
         setSnackbar({ show: true, message, type });
@@ -93,11 +100,11 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
             localStorage.setItem('user', JSON.stringify(data.user));
             if (onUpdateUser) onUpdateUser(data.user);
 
-            alert("Profile updated!");
+            showSnackbar("Profile updated successfully!", 'success');
             // Don't close, user might want to see the change
         } catch (error) {
             console.error(error);
-            alert("Update failed");
+            showSnackbar("Update failed. Please try again.", 'error');
         } finally {
             setLoading(false);
         }
@@ -106,7 +113,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const handleChangePassword = async (e) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
-            alert("New passwords do not match!");
+            showSnackbar("New passwords do not match!", 'error');
             return;
         }
 
@@ -118,12 +125,12 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            alert("Password updated successfully!");
+            showSnackbar("Password updated successfully!", 'success');
             setOldPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (error) {
-            alert(error.response?.data?.error || "Update failed");
+            showSnackbar(error.response?.data?.error || "Update failed", 'error');
         } finally {
             setLoading(false);
         }
@@ -132,7 +139,7 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
     const handleUpdateSecurityQuestion = async (e) => {
         e.preventDefault();
         if (!secQuestion || !secAnswer) {
-            alert("Please provide both a question and an answer.");
+            showSnackbar("Please provide both a question and an answer.", 'error');
             return;
         }
 
@@ -149,11 +156,11 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
             localStorage.setItem('user', JSON.stringify(data.user));
             if (onUpdateUser) onUpdateUser(data.user);
 
-            alert("Security question updated successfully!");
+            showSnackbar("Security question updated successfully!", 'success');
             setSecAnswer(''); // Clear answer for security
         } catch (error) {
             console.error(error);
-            alert("Failed to update security question.");
+            showSnackbar("Failed to update security question.", 'error');
         } finally {
             setLoading(false);
         }
@@ -406,13 +413,13 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                 <div className="form-group" style={{ marginBottom: '16px' }}>
                                     <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Security Question</label>
                                     <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
-                                        <FiLock color="#aaa" />
+                                        <FiHelpCircle color="#aaa" />
                                         <input
                                             type="text"
                                             value={secQuestion}
                                             onChange={e => setSecQuestion(e.target.value)}
                                             placeholder="e.g. What is your mother's maiden name?"
-                                            style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                            style={{ border: 'none', padding: '12px', width: '100%', outline: 'none', color: '#000' }}
                                         />
                                     </div>
                                 </div>
@@ -420,13 +427,13 @@ const ProfileDialog = ({ user, onClose, onUpdateUser }) => {
                                 <div className="form-group" style={{ marginBottom: '16px' }}>
                                     <label style={{ fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>Answer</label>
                                     <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '8px', padding: '0 12px' }}>
-                                        <FiCheck color="#aaa" />
+                                        <FiKey color="#aaa" />
                                         <input
                                             type="text" // Visible for user to see what they type, or password? usually text for answer is fine or toggle. Let's keep text for simplicity as they set it.
                                             value={secAnswer}
                                             onChange={e => setSecAnswer(e.target.value)}
                                             placeholder="Your answer"
-                                            style={{ border: 'none', padding: '12px', width: '100%', outline: 'none' }}
+                                            style={{ border: 'none', padding: '12px', width: '100%', outline: 'none', color: '#000' }}
                                         />
                                     </div>
                                 </div>

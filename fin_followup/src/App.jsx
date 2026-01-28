@@ -33,10 +33,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      <PermissionRequest />
+      {user && <PermissionRequest />}
       <Routes>
         <Route path="/login" element={
-          !user ? <Login /> : (user.name ? <Navigate to="/" /> : <Navigate to="/register" />)
+          !user ? <Login /> : <Navigate to="/" />
         } />
 
         <Route path="/register" element={
@@ -48,23 +48,23 @@ function App() {
         } />
 
         <Route path="/" element={
-          user ? (user.name ? <Home /> : <Navigate to="/register" />) : <Navigate to="/login" />
+          user ? <Home /> : <Navigate to="/login" />
         } />
 
         <Route path="/add-customer" element={
-          user ? (user.name ? <AddCustomer /> : <Navigate to="/register" />) : <Navigate to="/login" />
+          user ? <AddCustomer /> : <Navigate to="/login" />
         } />
 
         <Route path="/my-customers" element={
-          user ? (user.name ? <MyCustomers /> : <Navigate to="/register" />) : <Navigate to="/login" />
+          user ? <MyCustomers /> : <Navigate to="/login" />
         } />
 
         <Route path="/workflow" element={
-          user ? (user.name ? <WorkflowManager /> : <Navigate to="/register" />) : <Navigate to="/login" />
+          user ? <WorkflowManager /> : <Navigate to="/login" />
         } />
 
         <Route path="/edit-customer/:id" element={
-          user ? (user.name ? <AddCustomer /> : <Navigate to="/register" />) : <Navigate to="/login" />
+          user ? <AddCustomer /> : <Navigate to="/login" />
         } />
 
         <Route path="*" element={<Navigate to="/" />} />

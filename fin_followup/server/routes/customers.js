@@ -62,6 +62,19 @@ const cpUpload = upload.fields([
 router.post('/', cpUpload, async (req, res) => {
     const { userId, name, customerName, phone, loanType, address, followUpDate } = req.body;
 
+    // Check for duplicate customer
+    try {
+        const existingCustomer = await Customer.findOne({ userId, phone });
+        if (existingCustomer) {
+            return res.status(400).json({
+                error: `Customer '${existingCustomer.name}' with phone number ${phone} already exists.`
+            });
+        }
+    } catch (err) {
+        console.error("Error checking for duplicate customer:", err);
+        return res.status(500).json({ error: "Failed to check for duplicates" });
+    }
+
     let parsedCoordinates = null;
     if (req.body.coordinates) {
         try {

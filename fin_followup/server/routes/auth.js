@@ -82,7 +82,7 @@ router.post('/register', async (req, res) => {
 
         res.json({
             token,
-            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl }
+            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl, securityQuestion: user.securityQuestion }
         });
     } catch (err) {
         console.error(err);
@@ -113,7 +113,7 @@ router.post('/login', async (req, res) => {
 
         res.json({
             token,
-            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl }
+            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl, securityQuestion: user.securityQuestion }
         });
     } catch (err) {
         console.error(err);
@@ -211,7 +211,7 @@ router.post('/update-profile', authMiddleware, upload.single('photo'), async (re
 
         res.json({
             message: "Profile updated successfully",
-            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl }
+            user: { _id: user._id, email: user.email, name: user.name, agencyName: user.agencyName, photoUrl: user.photoUrl, securityQuestion: user.securityQuestion }
         });
     } catch (err) {
         console.error(err);
@@ -287,6 +287,9 @@ router.put('/security-question', authMiddleware, async (req, res) => {
             user: {
                 _id: user._id,
                 email: user.email,
+                name: user.name,
+                agencyName: user.agencyName,
+                photoUrl: user.photoUrl,
                 securityQuestion: user.securityQuestion
             }
         });
